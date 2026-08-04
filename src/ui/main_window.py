@@ -14,6 +14,7 @@ import tkinter as tk
 from src.ui.navigation import NavigationPanel
 from src.ui.playlist_view import PlaylistView
 from src.ui.player_controls import PlayerControls
+from src.services.audio_service import AudioService
 
 class MainWindow:
     """Main application window."""
@@ -22,6 +23,7 @@ class MainWindow:
 
         self.root = tk.Tk()
 
+        self.audio_service = AudioService()
         self.configure_window()
 
         self.create_frames()
@@ -112,7 +114,9 @@ class MainWindow:
         # Bottom Controls
         # ===========================
         self.controls_frame = PlayerControls(
-        self.main_container
+        self.main_container,
+        on_play_pause=self.handle_play_pause,
+        on_volume_change=self.handle_volume_change,
         )
 
         self.controls_frame.pack(
@@ -121,9 +125,41 @@ class MainWindow:
         )
     def handle_song_selection(self, song):
         """Handle a song selected from the playlist."""
-
+        # Update the Now Playing UI
         self.cassette_frame.update_song(song)
+
+        # Load the selected song
+        self.audio_service.load_song(song)
+
     # -------------------------------------------------
+    def handle_play_pause(self):
+        """Toggle between playing and paused states."""
+
+        if self.audio_service.current_song is None:
+            return
+
+        if self.audio_service.is_paused:
+
+            self.audio_service.resume()
+
+            self.controls_frame.set_playing(True)
+
+        elif self.audio_service.is_playing:
+
+            self.audio_service.pause()
+
+            self.controls_frame.set_playing(False)
+
+        else:
+
+            self.audio_service.play()
+
+            self.controls_frame.set_playing(True)
+
+    def handle_volume_change(self, value):
+        """Change playback volume."""
+
+        self.audio_service.set_volume(value)
 
     def run(self):
 

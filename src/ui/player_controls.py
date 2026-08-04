@@ -5,7 +5,7 @@ Playback controls for the music player.
 import tkinter as tk
 from tkinter import ttk
 
-from click import style
+
 
 from src.ui.theme import (
     CONTROLS_BG,
@@ -20,13 +20,14 @@ from src.ui.theme import (
 class PlayerControls(tk.Frame):
     """Bottom playback control panel."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, on_play_pause=None, on_volume_change=None):
         super().__init__(
             parent,
             bg=CONTROLS_BG,
             height=140,
         )
-
+        self.on_play_pause = on_play_pause
+        self.on_volume_change = on_volume_change
         self.pack_propagate(False)
 
         self.configure_styles()
@@ -144,6 +145,7 @@ class PlayerControls(tk.Frame):
             button_frame,
             "▶",
             accent=True,
+            command=self.handle_play_pause,
         )
 
         self.play_button.pack(
@@ -195,6 +197,7 @@ class PlayerControls(tk.Frame):
             to=100,
             orient="horizontal",
             style="Player.Horizontal.TScale",
+            command=self.handle_volume_change,
         )
 
         self.volume_slider.set(70)
@@ -205,22 +208,53 @@ class PlayerControls(tk.Frame):
             expand=True,
         )
 
-    def create_button(self, parent, text, accent=False):
-        """Create a playback button."""
+    def create_button(
+    self,
+    parent,
+    text,
+    accent=False,
+    command=None,
+):
+     """Create a playback button."""
 
-        return tk.Button(
-            parent,
-            text=text,
-            font=(
-                "Segoe UI Symbol",
-                17 if accent else 14,
-            ),
-            bg=ACCENT_COLOR if accent else CONTROLS_BG,
-            fg=TEXT_PRIMARY,
-            activebackground=ACCENT_COLOR,
-            activeforeground=TEXT_PRIMARY,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            width=3,
-        )
+     button = tk.Button(
+        parent,
+        text=text,
+        font=(
+            "Segoe UI Symbol",
+            17 if accent else 14,
+        ),
+        bg=ACCENT_COLOR if accent else CONTROLS_BG,
+        fg=TEXT_PRIMARY,
+        activebackground=ACCENT_COLOR,
+        activeforeground=TEXT_PRIMARY,
+        relief="flat",
+        bd=0,
+        cursor="hand2",
+        width=3,
+    )
+
+     if command is not None:
+        button.config(command=command)
+
+     return button
+
+    def set_playing(self, playing):
+        """Update the Play/Pause button icon."""
+
+        if playing:
+            self.play_button.config(text="⏸")
+        else:
+            self.play_button.config(text="▶")
+
+    def handle_play_pause(self):
+        """Notify MainWindow that Play/Pause was pressed."""
+
+        if self.on_play_pause:
+            self.on_play_pause()
+
+    def handle_volume_change(self, value):
+        """Notify MainWindow when volume changes."""
+
+        if self.on_volume_change:
+            self.on_volume_change(value)
