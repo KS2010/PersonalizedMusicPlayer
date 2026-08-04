@@ -72,7 +72,9 @@ class CassettePanel(tk.Frame):
             fg=TEXT_PRIMARY
             )
 
-        self.song_title.pack()
+        self.song_title.pack(
+            pady=(0,12)
+        )
 
 
 
@@ -85,7 +87,7 @@ class CassettePanel(tk.Frame):
         )
 
         self.artist_label.pack(
-        pady=5
+        pady=(0,8)
         )
 
         self.album_label = tk.Label(
@@ -96,7 +98,9 @@ class CassettePanel(tk.Frame):
             fg=TEXT_SECONDARY
             )
 
-        self.album_label.pack()
+        self.album_label.pack(
+            pady = (0, 8)
+        )
 
 
         self.duration_label = tk.Label(
@@ -110,10 +114,22 @@ class CassettePanel(tk.Frame):
         self.duration_label.pack(
         pady=(5, 40)
         )
-def update_song(self, title, artist, album, duration):
-    """Update the song information displayed."""
 
-    self.song_title.config(text=title)
-    self.artist_label.config(text=artist)
-    self.album_label.config(text=f"Album : {album}")
-    self.duration_label.config(text=f"Duration : {duration}")
+    def update_song(self, song):
+        """Update the Now Playing information."""
+
+        self.song_title.config(
+            text=song.title
+        )
+
+        self.artist_label.config(
+        text=song.artist
+    )
+
+        self.album_label.config(
+        text=f"Album : {song.album}"
+    )
+
+        self.duration_label.config(
+        text=f"Duration : {song.formatted_duration}"
+    )

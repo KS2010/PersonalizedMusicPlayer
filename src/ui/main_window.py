@@ -1,6 +1,7 @@
 """
 Main application window.
 """
+from src.models import song
 from src.ui.theme import (
     BACKGROUND_COLOR,
     NAVIGATION_WIDTH,
@@ -98,7 +99,8 @@ class MainWindow:
         # Playlist
         # ===========================
         self.playlist_frame = PlaylistView(
-        self.top_section
+        self.top_section,
+        on_song_selected=self.handle_song_selection,
         )
 
         self.playlist_frame.pack(
@@ -117,7 +119,10 @@ class MainWindow:
         side="bottom",
         fill="x"
         )
+    def handle_song_selection(self, song):
+        """Handle a song selected from the playlist."""
 
+        self.cassette_frame.update_song(song)
     # -------------------------------------------------
 
     def run(self):
