@@ -1,7 +1,14 @@
 """
 Main application window.
 """
+from src.ui.theme import (
+    BACKGROUND_COLOR,
+    NAVIGATION_WIDTH,
+    PLAYLIST_WIDTH,
+    CONTROLS_HEIGHT,
+)
 
+from src.ui.cassette import CassettePanel
 import tkinter as tk
 from src.ui.navigation import NavigationPanel
 
@@ -27,7 +34,7 @@ class MainWindow:
 
         self.root.minsize(1200, 700)
 
-        self.root.configure(bg="#121212")
+        self.root.configure(bg=BACKGROUND_COLOR)
 
     # -------------------------------------------------
 
@@ -39,7 +46,7 @@ class MainWindow:
 
         self.main_container = tk.Frame(
             self.root,
-            bg="#121212"
+            bg=BACKGROUND_COLOR
         )
 
         self.main_container.pack(
@@ -53,7 +60,7 @@ class MainWindow:
 
         self.top_section = tk.Frame(
             self.main_container,
-            bg="#121212"
+            bg=BACKGROUND_COLOR
         )
 
         self.top_section.pack(
@@ -76,15 +83,14 @@ class MainWindow:
         # Cassette Area
         # ===========================
 
-        self.cassette_frame = tk.Frame(
-            self.top_section,
-            bg="#222222"
+        self.cassette_frame = CassettePanel(
+        self.top_section
         )
 
         self.cassette_frame.pack(
-            side="left",
-            fill="both",
-            expand=True
+        side="left",
+        fill="both",
+        expand=True
         )
 
         # ===========================
@@ -94,7 +100,7 @@ class MainWindow:
         self.playlist_frame = tk.Frame(
             self.top_section,
             bg="#191919",
-            width=300
+            width=PLAYLIST_WIDTH
         )
 
         self.playlist_frame.pack(
@@ -111,7 +117,7 @@ class MainWindow:
         self.controls_frame = tk.Frame(
             self.main_container,
             bg="#181818",
-            height=120
+            height=CONTROLS_HEIGHT
         )
 
         self.controls_frame.pack(

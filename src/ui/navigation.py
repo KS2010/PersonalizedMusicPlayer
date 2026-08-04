@@ -1,3 +1,4 @@
+from src.ui.theme import *
 import tkinter as tk
 
 
@@ -21,7 +22,7 @@ class NavigationPanel(tk.Frame):
             self,
             text="🎵",
             font=("Segoe UI Emoji", 40),
-            bg="#1B1B1B",
+            bg=NAVIGATION_BG,
             fg="#8A5CF6"
         )
 
@@ -30,9 +31,9 @@ class NavigationPanel(tk.Frame):
         title = tk.Label(
             self,
             text="Personalized\nMusic Player",
-            font=("Segoe UI", 16, "bold"),
+            font=SUBTITLE_FONT,
             bg="#1B1B1B",
-            fg="white",
+            fg=TEXT_PRIMARY,
             justify="center"
         )
 
@@ -53,11 +54,11 @@ class NavigationPanel(tk.Frame):
                 self,
                 text=item,
                 anchor="w",
-                font=("Segoe UI", 12),
+                font=BODY_FONT,
                 bg="#1B1B1B",
                 fg="white",
-                activebackground="#2C2C2C",
-                activeforeground="#8A5CF6",
+                activebackground=BUTTON_HOVER,
+                activeforeground=ACCENT_COLOR,
                 relief="flat",
                 bd=0,
                 padx=20,
@@ -71,8 +72,8 @@ class NavigationPanel(tk.Frame):
             self,
             text="Version 1.0",
             bg="#1B1B1B",
-            fg="#777777",
-            font=("Segoe UI", 9)
+            fg=TEXT_MUTED,
+            font=SMALL_FONT
         )
 
         footer.pack(side="bottom", pady=20)
