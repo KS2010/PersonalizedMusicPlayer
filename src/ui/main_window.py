@@ -11,7 +11,8 @@ from src.ui.theme import (
 from src.ui.cassette import CassettePanel
 import tkinter as tk
 from src.ui.navigation import NavigationPanel
-
+from src.ui.playlist_view import PlaylistView
+from src.ui.player_controls import PlayerControls
 
 class MainWindow:
     """Main application window."""
@@ -96,36 +97,26 @@ class MainWindow:
         # ===========================
         # Playlist
         # ===========================
-
-        self.playlist_frame = tk.Frame(
-            self.top_section,
-            bg="#191919",
-            width=PLAYLIST_WIDTH
+        self.playlist_frame = PlaylistView(
+        self.top_section
         )
 
         self.playlist_frame.pack(
-            side="right",
-            fill="y"
+        side="right",
+        fill="y"
         )
-
-        self.playlist_frame.pack_propagate(False)
 
         # ===========================
         # Bottom Controls
         # ===========================
-
-        self.controls_frame = tk.Frame(
-            self.main_container,
-            bg="#181818",
-            height=CONTROLS_HEIGHT
+        self.controls_frame = PlayerControls(
+        self.main_container
         )
 
         self.controls_frame.pack(
-            side="bottom",
-            fill="x"
+        side="bottom",
+        fill="x"
         )
-
-        self.controls_frame.pack_propagate(False)
 
     # -------------------------------------------------
 
