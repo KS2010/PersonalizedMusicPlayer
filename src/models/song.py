@@ -14,6 +14,7 @@ class Song:
     artist: str = "Unknown Artist"
     album: str = "Unknown Album"
     duration: float = 0.0
+    is_favorite: bool = False
 
     @property
     def formatted_duration(self):

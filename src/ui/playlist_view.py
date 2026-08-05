@@ -287,6 +287,7 @@ class PlaylistView(tk.Frame):
             bg=PLAYLIST_BG,
             fg=TEXT_PRIMARY,
             anchor="w",
+            width=24,
         )
 
         title_label.pack(
@@ -307,17 +308,39 @@ class PlaylistView(tk.Frame):
             pady=(2, 0),
         )
 
+        favorite_button = tk.Button(
+        song_frame,
+        text="♥" if song.is_favorite else "♡",
+        font=("Segoe UI Symbol", 11),
+        bg=PLAYLIST_BG,
+        fg=ACCENT_COLOR if song.is_favorite else TEXT_SECONDARY,
+        activebackground=PLAYLIST_BG,
+        activeforeground=ACCENT_COLOR,
+        relief="flat",
+        bd=0,
+        cursor="hand2",
+        command=lambda selected_song=song: self.toggle_favorite(
+        selected_song
+        ),
+        )
+
+        favorite_button.pack(
+        side="right",
+        padx=(6, 0),
+        )
+
         duration_label = tk.Label(
             song_frame,
             text=song.formatted_duration,
             font=("Segoe UI", 9),
             bg=PLAYLIST_BG,
             fg=TEXT_SECONDARY,
+            width=5,
         )
 
         duration_label.pack(
             side="right",
-            padx=(8, 0),
+            padx=(5, 0),
         )
         clickable_widgets = [
             song_frame,
@@ -467,3 +490,16 @@ class PlaylistView(tk.Frame):
         empty_subtitle.pack(
         pady=(8, 0),
     )
+
+    def toggle_favorite(self, song):
+        """Toggle a song's favorite status."""
+
+        song.is_favorite = not song.is_favorite
+
+        if self.database_service:
+            self.database_service.set_favorite(
+            song.filepath,
+            song.is_favorite,
+        )
+
+        self.refresh_playlist()

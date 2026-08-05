@@ -2,6 +2,7 @@
 SQLite database service for the music player.
 """
 
+from multiprocessing import connection
 import sqlite3
 from pathlib import Path
 from src.models.song import Song
@@ -41,6 +42,16 @@ class DatabaseService:
                 )
                 """
             )
+            try:
+                connection.execute(
+                """
+                ALTER TABLE songs
+                ADD COLUMN is_favorite INTEGER DEFAULT 0
+                """
+            )
+            except sqlite3.OperationalError:
+                # Column already exists.
+                pass
 
             connection.commit()
 
@@ -81,7 +92,8 @@ class DatabaseService:
                 title,
                 artist,
                 album,
-                duration
+                duration,
+                is_favorite
             FROM songs
             ORDER BY date_added ASC
             """
@@ -96,6 +108,25 @@ class DatabaseService:
             artist=row[2],
             album=row[3] or "Unknown Album",
             duration=row[4],
+            is_favorite=bool(row[5]),
         )
         for row in rows
     ]
+
+    def set_favorite(self, filepath, is_favorite):
+        """Update a song's favorite status."""
+
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE songs
+                SET is_favorite = ?
+                WHERE filepath = ?
+                """,
+                (
+                int(is_favorite),
+                filepath,
+                ),
+            )
+
+        connection.commit()
