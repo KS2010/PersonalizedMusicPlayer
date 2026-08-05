@@ -5,8 +5,6 @@ Playlist panel for the music player.
 import tkinter as tk
 from tkinter import filedialog
 
-from src import widgets
-from src.models import song
 from src.services.metadata_service import load_song_metadata
 from src.ui.theme import (
     ACCENT_COLOR,
@@ -294,21 +292,22 @@ class PlaylistView(tk.Frame):
             side="right",
             padx=(8, 0),
         )
-        widgets = [
-    song_frame,
-    info_frame,
-    title_label,
-    artist_label,
-    duration_label,
+        clickable_widgets = [
+            song_frame,
+            info_frame,
+            title_label,
+            artist_label,
+            duration_label,
         ]
 
-        for widget in widgets:
+        for widget in clickable_widgets:
             widget.bind(
-            "<Button-1>",
-            lambda event, selected_song=song: self.select_song(
-                selected_song
-            ),
-        )
+        "<Button-1>",
+        lambda event, selected_song=song: self.select_song(
+            selected_song
+        ),
+    )
+            
     def select_song(self, song):
         """Handle song selection."""
 

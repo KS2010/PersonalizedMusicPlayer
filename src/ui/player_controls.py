@@ -21,7 +21,7 @@ from src.ui.theme import (
 class PlayerControls(tk.Frame):
     """Bottom playback control panel."""
 
-    def __init__(self, parent, on_play_pause=None, on_volume_change=None,on_seek=None):
+    def __init__(self, parent, on_play_pause=None, on_volume_change=None,on_seek=None,on_previous=None,on_next=None,):
         super().__init__(
             parent,
             bg=CONTROLS_BG,
@@ -30,6 +30,8 @@ class PlayerControls(tk.Frame):
         self.on_play_pause = on_play_pause
         self.on_volume_change = on_volume_change
         self.on_seek = on_seek
+        self.on_previous = on_previous
+        self.on_next = on_next
 
         self.is_seeking = False
         self.pack_propagate(False)
@@ -147,6 +149,7 @@ class PlayerControls(tk.Frame):
         self.previous_button = self.create_button(
             button_frame,
             "⏮",
+            command=self.handle_previous,
         )
 
         self.previous_button.pack(
@@ -170,6 +173,7 @@ class PlayerControls(tk.Frame):
         self.next_button = self.create_button(
             button_frame,
             "⏭",
+            command=self.handle_next,
         )
 
         self.next_button.pack(
@@ -323,3 +327,16 @@ class PlayerControls(tk.Frame):
 
         if self.on_seek:
             self.on_seek(position)
+
+    def handle_previous(self):
+        """Notify MainWindow that Previous was pressed."""
+
+        if self.on_previous:
+            self.on_previous()
+
+
+    def handle_next(self):
+        """Notify MainWindow that Next was pressed."""
+
+        if self.on_next:
+            self.on_next()

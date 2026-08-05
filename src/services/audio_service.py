@@ -48,6 +48,7 @@ class AudioService:
 
         pygame.mixer.music.play()
 
+        self.seek_offset = 0.0
         self.is_playing = True
         self.is_paused = False
 
@@ -135,3 +136,17 @@ class AudioService:
 
         except pygame.error as error:
             print(f"Could not seek song: {pygame.error}")
+
+    def has_song_ended(self):
+        """Return True when the current song has finished playing."""
+
+        if self.current_song is None:
+            return False
+
+        if self.is_paused:
+            return False
+
+        if not self.is_playing:
+            return False
+
+        return not pygame.mixer.music.get_busy()
