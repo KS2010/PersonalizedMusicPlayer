@@ -4,6 +4,7 @@ Playback controls for the music player.
 
 import tkinter as tk
 from tkinter import ttk
+from turtle import position
 
 
 
@@ -20,7 +21,7 @@ from src.ui.theme import (
 class PlayerControls(tk.Frame):
     """Bottom playback control panel."""
 
-    def __init__(self, parent, on_play_pause=None, on_volume_change=None):
+    def __init__(self, parent, on_play_pause=None, on_volume_change=None,on_seek=None):
         super().__init__(
             parent,
             bg=CONTROLS_BG,
@@ -28,6 +29,9 @@ class PlayerControls(tk.Frame):
         )
         self.on_play_pause = on_play_pause
         self.on_volume_change = on_volume_change
+        self.on_seek = on_seek
+
+        self.is_seeking = False
         self.pack_propagate(False)
 
         self.configure_styles()
@@ -85,6 +89,15 @@ class PlayerControls(tk.Frame):
             expand=True,
             padx=15,
         )
+        self.progress_bar.bind(
+            "<ButtonPress-1>",
+            self.start_seek,
+            )
+
+        self.progress_bar.bind(
+            "<ButtonRelease-1>",
+            self.finish_seek,
+            )
 
         self.duration_label = tk.Label(
             progress_frame,
@@ -258,3 +271,55 @@ class PlayerControls(tk.Frame):
 
         if self.on_volume_change:
             self.on_volume_change(value)
+
+    def format_time(self, seconds):
+        """Convert seconds into M:SS format."""
+
+        seconds = max(0, int(seconds))
+
+        minutes = seconds // 60
+        remaining_seconds = seconds % 60
+
+        return f"{minutes}:{remaining_seconds:02d}"
+
+    def set_duration(self, duration):
+        """Set the total duration displayed by the controls."""
+
+        self.progress_bar.config(
+            to=max(duration, 1)
+        )
+
+        self.duration_label.config(
+            text=self.format_time(duration)
+        )
+
+    def update_progress(self, position):
+        """Update playback time and progress slider."""
+
+        if self.is_seeking:
+            return
+
+        self.progress_bar.set(position)
+
+        self.current_time_label.config(
+            text=self.format_time(position)
+        )
+
+    def start_seek(self, event):
+        """Pause automatic progress updates while dragging."""
+
+        self.is_seeking = True
+
+    def finish_seek(self, event):
+        """Seek playback when the progress slider is released."""
+
+        position = self.progress_bar.get()
+
+        self.is_seeking = False
+
+        self.current_time_label.config(
+        text=self.format_time(position)
+        )
+
+        if self.on_seek:
+            self.on_seek(position)
