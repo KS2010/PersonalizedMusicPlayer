@@ -116,6 +116,20 @@ class PlaylistView(tk.Frame):
             0,
             "Search songs...",
         )
+        self.search_entry.bind(
+            "<FocusIn>",
+            self.clear_search_placeholder,
+        )
+
+        self.search_entry.bind(
+            "<FocusOut>",
+            self.restore_search_placeholder,
+        )
+
+        self.search_entry.bind(
+            "<KeyRelease>",
+            self.filter_playlist,
+        )
 
         self.search_entry.pack(
             fill="x",
@@ -203,26 +217,32 @@ class PlaylistView(tk.Frame):
     # ==============================================
 
     def refresh_playlist(self):
-        """Redraw the playlist."""
+        """Redraw the complete playlist."""
 
+        self.render_songs(self.songs)
+
+    def render_songs(self, songs):
+        """Render the provided songs in the playlist."""
+
+        # Remove currently displayed song rows.
         for widget in self.song_list_frame.winfo_children():
             widget.destroy()
 
-        song_count = len(self.songs)
+        song_count = len(songs)
 
         self.song_count_label.config(
-            text=f"{song_count} {'song' if song_count == 1 else 'songs'}"
+         text=f"{song_count} {'song' if song_count == 1 else 'songs'}"
         )
 
-        if not self.songs:
+        if not songs:
             self.show_empty_state()
             return
 
-        for index, song in enumerate(self.songs):
+        for index, song in enumerate(songs):
             self.create_song_row(
-                song,
-                index,
-            )
+            song,
+            index,
+        )
 
     def create_song_row(self, song, index):
         """Create one song entry in the playlist."""
@@ -302,12 +322,12 @@ class PlaylistView(tk.Frame):
 
         for widget in clickable_widgets:
             widget.bind(
-        "<Button-1>",
-        lambda event, selected_song=song: self.select_song(
-            selected_song
-        ),
-    )
-            
+                "<Button-1>",
+                lambda event, selected_song=song: self.select_song(
+                selected_song
+            ),
+        )
+
     def select_song(self, song):
         """Handle song selection."""
 
@@ -350,3 +370,93 @@ class PlaylistView(tk.Frame):
         empty_subtitle.pack(
             pady=(8, 0),
         )
+
+    def clear_search_placeholder(self, event):
+        """Remove the search placeholder when focused."""
+
+        if self.search_entry.get() == "Search songs...":
+            self.search_entry.delete(0, tk.END)
+
+
+    def restore_search_placeholder(self, event):
+        """Restore the placeholder when the search is empty."""
+
+        if not self.search_entry.get().strip():
+            self.search_entry.insert(
+            0,
+            "Search songs...",
+        )
+
+    def filter_playlist(self, event=None):
+        """Filter playlist songs by title, artist, or album."""
+
+        query = self.search_entry.get().strip().lower()
+
+    # Treat placeholder text as an empty search.
+        if query == "search songs...":
+            query = ""
+
+    # Empty search -> show complete playlist.
+        if not query:
+            self.refresh_playlist()
+            return
+
+    # Find matching songs.
+        filtered_songs = [
+            song
+            for song in self.songs
+            if (
+            query in song.title.lower()
+            or query in song.artist.lower()
+            or query in song.album.lower()
+        )
+    ]
+
+    # No matching songs.
+        if not filtered_songs:
+            for widget in self.song_list_frame.winfo_children():
+                widget.destroy()
+
+            self.song_count_label.config(
+            text="0 songs"
+            )
+
+            self.show_no_results()
+            return
+
+        # Display matching songs.
+        self.render_songs(filtered_songs)
+
+    def show_no_results(self):
+        """Display a message when search returns no matches."""
+
+        empty_container = tk.Frame(
+            self.song_list_frame,
+            bg=PLAYLIST_BG,
+        )
+
+        empty_container.pack(
+        expand=True,
+    )
+
+        empty_title = tk.Label(
+        empty_container,
+        text="No matching songs",
+        font=("Segoe UI", 10, "bold"),
+        bg=PLAYLIST_BG,
+        fg=TEXT_PRIMARY,
+    )
+
+        empty_title.pack()
+
+        empty_subtitle = tk.Label(
+        empty_container,
+        text="Try another title, artist, or album",
+        font=("Segoe UI", 9),
+        bg=PLAYLIST_BG,
+        fg=TEXT_SECONDARY,
+    )
+
+        empty_subtitle.pack(
+        pady=(8, 0),
+    )
