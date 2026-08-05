@@ -12,7 +12,7 @@ from src.ui.navigation import NavigationPanel
 from src.ui.playlist_view import PlaylistView
 from src.ui.player_controls import PlayerControls
 from src.services.audio_service import AudioService
-
+from src.services.database_service import DatabaseService
 
 class MainWindow:
     """Main application window."""
@@ -22,6 +22,7 @@ class MainWindow:
         self.root = tk.Tk()
 
         self.audio_service = AudioService()
+        self.database_service = DatabaseService()
         self.configure_window()
         self.current_song_index = None
 
@@ -82,6 +83,7 @@ class MainWindow:
         self.playlist_frame = PlaylistView(
             self.top_section,
             on_song_selected=self.handle_song_selection,
+            database_service=self.database_service,
         )
 
         self.playlist_frame.pack(side="right", fill="y")

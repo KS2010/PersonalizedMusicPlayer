@@ -18,17 +18,21 @@ from src.ui.theme import (
 class PlaylistView(tk.Frame):
     """Displays and manages the current playlist."""
 
-    def __init__(self, parent, on_song_selected=None):
+    def __init__(self, parent, on_song_selected=None,database_service=None):
         super().__init__(
             parent,
             bg=PLAYLIST_BG,
             width=300,
         )
         self.on_song_selected = on_song_selected
+        self.database_service = database_service
+
         self.pack_propagate(False)
 
         # Stores Song objects.
         self.songs = []
+        if self.database_service:
+            self.songs = self.database_service.get_all_songs()
 
         self.create_widgets()
 
@@ -169,7 +173,7 @@ class PlaylistView(tk.Frame):
             pady=15,
         )
 
-        self.show_empty_state()
+        self.refresh_playlist()
 
     # ==============================================
     # Import Music
@@ -201,6 +205,9 @@ class PlaylistView(tk.Frame):
             song = load_song_metadata(filepath)
 
             self.songs.append(song)
+
+            if self.database_service:
+                self.database_service.add_song(song)
 
         self.refresh_playlist()
 

@@ -14,3 +14,7 @@ venv/
 
 # IDE settings
 .idea/
+
+# Local application database
+data/*.db
+data/*.db-journal
