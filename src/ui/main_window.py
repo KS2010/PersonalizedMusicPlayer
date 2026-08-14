@@ -65,7 +65,10 @@ class MainWindow:
         # Navigation
         # ===========================
 
-        self.navigation_frame = NavigationPanel(self.top_section)
+        self.navigation_frame = NavigationPanel(
+            self.top_section,
+            on_navigate=self.handle_navigation,
+        )
 
         self.navigation_frame.pack(side="left", fill="y")
 
@@ -258,6 +261,15 @@ class MainWindow:
         ) % len(songs)
 
         self.play_song_at_index(previous_index)
+
+    def handle_navigation(self, page):
+        """Handle sidebar navigation."""
+
+        if page == "library":
+            self.playlist_frame.show_library()
+
+        elif page == "favorites":
+            self.playlist_frame.show_favorites()
 
     def run(self):
 

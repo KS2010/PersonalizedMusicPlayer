@@ -31,6 +31,7 @@ class PlaylistView(tk.Frame):
 
         # Stores Song objects.
         self.songs = []
+        self.current_view = "library"
         if self.database_service:
             self.songs = self.database_service.get_all_songs()
 
@@ -54,7 +55,7 @@ class PlaylistView(tk.Frame):
             pady=(25, 10),
         )
 
-        title_label = tk.Label(
+        self.title_label = tk.Label(
             header_frame,
             text="YOUR PLAYLIST",
             font=("Segoe UI", 14, "bold"),
@@ -62,7 +63,7 @@ class PlaylistView(tk.Frame):
             fg=TEXT_PRIMARY,
         )
 
-        title_label.pack(anchor="w")
+        self.title_label.pack(anchor="w")
 
         self.song_count_label = tk.Label(
             header_frame,
@@ -224,9 +225,18 @@ class PlaylistView(tk.Frame):
     # ==============================================
 
     def refresh_playlist(self):
-        """Redraw the complete playlist."""
+        """Redraw the current playlist view."""
 
-        self.render_songs(self.songs)
+        if self.current_view == "favorites":
+            songs_to_display = [
+            song
+            for song in self.songs
+            if song.is_favorite
+        ]
+        else:
+            songs_to_display = self.songs
+
+        self.render_songs(songs_to_display)
 
     def render_songs(self, songs):
         """Render the provided songs in the playlist."""
@@ -500,6 +510,41 @@ class PlaylistView(tk.Frame):
             self.database_service.set_favorite(
             song.filepath,
             song.is_favorite,
+        )
+
+        self.refresh_playlist()
+
+    def show_library(self):
+        """Display all songs."""
+
+        self.current_view = "library"
+
+        self.title_label.config(
+        text="YOUR PLAYLIST"
+        )
+
+        self.search_entry.delete(0, tk.END)
+        self.search_entry.insert(
+        0,
+        "Search songs...",
+        )
+
+        self.refresh_playlist()
+
+
+    def show_favorites(self):
+        """Display favorite songs only."""
+
+        self.current_view = "favorites"
+
+        self.title_label.config(
+        text="FAVORITES"
+        )
+
+        self.search_entry.delete(0, tk.END)
+        self.search_entry.insert(
+        0,
+        "Search songs...",
         )
 
         self.refresh_playlist()
