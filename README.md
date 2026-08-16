@@ -302,16 +302,16 @@ This project was successfully verified in a **fresh virtual environment** contai
 ## 🖼 Screenshots
 
 ### Home
-![Home Screenshot](docs/screenshots/home.png)
+![Home Screenshot](docs/screenshots/Home.png)
 
 ### Library
-![Library Screenshot](docs/screenshots/library.png)
+![Library Screenshot](docs/screenshots/Library.png)
 
 ### Statistics
-![Statistics Screenshot](docs/screenshots/statistics.png)
+![Statistics Screenshot](docs/screenshots/Statistics.png)
 
 ### Settings
-![Settings Screenshot](docs/screenshots/settings.png)
+![Settings Screenshot](docs/screenshots/Settings.png)
 
 ---
 
