@@ -23,6 +23,7 @@ class SettingsView(tk.Frame):
         database_service,
         audio_service=None,
         on_settings_reset=None,
+        on_volume_change=None,
     ):
         super().__init__(
             parent,
@@ -32,9 +33,16 @@ class SettingsView(tk.Frame):
         self.database_service = database_service
         self.audio_service = audio_service
         self.on_settings_reset = on_settings_reset
+        self.on_volume_change = on_volume_change
+
+        # Prevent the volume callback from saving
+        # values while settings are being initialized.
+        self.loading_settings = True
 
         self.create_widgets()
         self.load_settings()
+
+        self.loading_settings = False
 
     # =================================================
     # UI
@@ -161,6 +169,9 @@ class SettingsView(tk.Frame):
             command=self.handle_volume_change,
         )
 
+        # Initial visual value only.
+        # load_settings() will replace this with
+        # the value stored in SQLite.
         self.volume_slider.set(70)
 
         self.volume_slider.pack(
@@ -374,7 +385,10 @@ class SettingsView(tk.Frame):
         )
 
         try:
-            volume = float(saved_volume)
+            volume = float(
+                saved_volume or 70
+            )
+
         except (TypeError, ValueError):
             volume = 70
 
@@ -383,22 +397,56 @@ class SettingsView(tk.Frame):
             min(100, volume),
         )
 
+        # Prevent the slider update from being
+        # interpreted as a user change.
+        self.loading_settings = True
+
+        # Update Settings slider.
         self.volume_slider.set(
             volume
         )
 
+        # Update Settings percentage.
         self.volume_value_label.config(
             text=f"{int(volume)}%"
         )
+
+        self.loading_settings = False
+
+    # =================================================
+    # Volume
+    # =================================================
 
     def handle_volume_change(self, value):
-        """Save the default volume."""
+        """Save and apply the default volume."""
 
-        volume = float(value)
+        # Ignore callbacks generated while loading
+        # the saved value from the database.
+        if self.loading_settings:
+            return
+
+        try:
+            volume = float(value)
+
+        except (TypeError, ValueError):
+            return
+
+        volume = max(
+            0,
+            min(100, volume),
+        )
+
+        # ==========================================
+        # Update Settings percentage
+        # ==========================================
 
         self.volume_value_label.config(
             text=f"{int(volume)}%"
         )
+
+        # ==========================================
+        # Save to database
+        # ==========================================
 
         if self.database_service is not None:
 
@@ -407,9 +455,23 @@ class SettingsView(tk.Frame):
                 int(volume),
             )
 
+        # ==========================================
+        # Apply immediately
+        # ==========================================
+
         if self.audio_service is not None:
 
             self.audio_service.set_volume(
+                volume
+            )
+
+        # ==========================================
+        # Synchronize Library slider
+        # ==========================================
+
+        if self.on_volume_change:
+
+            self.on_volume_change(
                 volume
             )
 
@@ -481,11 +543,37 @@ class SettingsView(tk.Frame):
         if not confirm:
             return
 
+        # Remove saved settings.
         self.database_service.clear_settings()
 
-        self.load_settings()
+        # Set the internal loading flag so that
+        # updating the slider does not save again.
+        self.loading_settings = True
+
+        self.volume_slider.set(70)
+
+        self.volume_value_label.config(
+            text="70%"
+        )
+
+        self.loading_settings = False
+
+        # Reset actual audio volume.
+        if self.audio_service is not None:
+
+            self.audio_service.set_volume(
+                70
+            )
+
+        # Synchronize Library player.
+        if self.on_volume_change:
+
+            self.on_volume_change(
+                70
+            )
 
         if self.on_settings_reset:
+
             self.on_settings_reset()
 
         messagebox.showinfo(

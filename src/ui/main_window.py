@@ -30,9 +30,7 @@ class MainWindow:
         self.database_service = DatabaseService()
         self.audio_service = AudioService()
 
-
         self.current_song_index = None
-        self.load_saved_settings()
 
         # ==========================================
         # Window configuration
@@ -45,6 +43,12 @@ class MainWindow:
         # ==========================================
 
         self.create_frames()
+
+        # ==========================================
+        # Load persistent settings
+        # ==========================================
+
+        self.load_saved_settings()
 
         # ==========================================
         # Start playback progress updater
@@ -169,6 +173,10 @@ class MainWindow:
             fill="y",
         )
 
+        # ==========================================
+        # Home
+        # ==========================================
+
         self.home_frame = HomeView(
             self.content_frame,
             database_service=self.database_service,
@@ -184,10 +192,6 @@ class MainWindow:
             database_service=self.database_service,
         )
 
-        # Do NOT pack Statistics yet.
-        # It will be displayed when the user clicks
-        # Statistics.
-
         # ==========================================
         # Settings
         # ==========================================
@@ -196,7 +200,9 @@ class MainWindow:
             self.content_frame,
             database_service=self.database_service,
             audio_service=self.audio_service,
+            on_volume_change=self.handle_settings_volume_change,
         )
+
         # ==========================================
         # Bottom playback controls
         # ==========================================
@@ -246,14 +252,14 @@ class MainWindow:
         self.settings_frame.pack_forget()
 
         self.home_frame.pack(
-        fill="both",
-        expand=True,
+            fill="both",
+            expand=True,
         )
 
         self.home_frame.refresh_home()
 
     def show_statistics_area(self):
-        """Show the statistics dashboard."""
+        """Show the Statistics dashboard."""
 
         self.cassette_frame.pack_forget()
         self.playlist_frame.pack_forget()
@@ -261,8 +267,8 @@ class MainWindow:
         self.settings_frame.pack_forget()
 
         self.statistics_frame.pack(
-        fill="both",
-        expand=True,
+            fill="both",
+            expand=True,
         )
 
         self.statistics_frame.refresh_statistics()
@@ -276,11 +282,12 @@ class MainWindow:
         self.statistics_frame.pack_forget()
 
         self.settings_frame.pack(
-        fill="both",
-        expand=True,
+            fill="both",
+            expand=True,
         )
 
         self.settings_frame.load_settings()
+
     # =================================================
     # Song Selection
     # =================================================
@@ -365,6 +372,10 @@ class MainWindow:
 
             self.audio_service.play()
 
+            self.database_service.record_play(
+                self.audio_service.current_song.filepath
+            )
+
             self.controls_frame.set_playing(
                 True
             )
@@ -374,10 +385,87 @@ class MainWindow:
     # =================================================
 
     def handle_volume_change(self, value):
-        """Change playback volume."""
+        """Change playback volume from the player controls."""
 
+        try:
+            volume = float(value)
+
+        except (TypeError, ValueError):
+            return
+
+        volume = max(
+            0,
+            min(100, volume),
+        )
+
+        # Apply immediately.
         self.audio_service.set_volume(
-            value
+            volume
+        )
+
+        # Save as the new default.
+        self.database_service.set_setting(
+            "default_volume",
+            int(volume),
+        )
+
+    def handle_settings_volume_change(self, value):
+        """Synchronize Settings volume with player controls."""
+
+        try:
+            volume = float(value)
+
+        except (TypeError, ValueError):
+            return
+
+        volume = max(
+            0,
+            min(100, volume),
+        )
+
+        # Apply to audio engine.
+        self.audio_service.set_volume(
+            volume
+        )
+
+        # Update the Library player's slider.
+        self.controls_frame.set_volume(
+            volume
+        )
+
+    # =================================================
+    # Persistent Settings
+    # =================================================
+
+    def load_saved_settings(self):
+        """Load saved application settings."""
+
+        saved_volume = self.database_service.get_setting(
+            "default_volume",
+            "70",
+        )
+
+        try:
+            volume = float(
+                saved_volume or 70
+            )
+
+        except (TypeError, ValueError):
+            volume = 70
+
+        volume = max(
+            0,
+            min(100, volume),
+        )
+
+        # Apply saved volume to audio engine.
+        self.audio_service.set_volume(
+            volume
+        )
+
+        # Synchronize Library player slider.
+        self.controls_frame.set_volume(
+            volume
         )
 
     # =================================================
@@ -475,7 +563,7 @@ class MainWindow:
     # =================================================
 
     def play_song_at_index(self, index):
-        """Load and play a song from the playlist."""
+        """Load and play a song from the playlist by index."""
 
         songs = self.playlist_frame.songs
 
@@ -627,27 +715,6 @@ class MainWindow:
         elif page == "settings":
 
             self.show_settings_area()
-
-    def load_saved_settings(self):
-        """Load saved application settings."""
-
-        saved_volume = self.database_service.get_setting(
-            "default_volume",
-            "70",
-        )
-
-        try:
-            volume = float(saved_volume or 70)
-        except (TypeError, ValueError):
-            volume = 70
-            volume = max(
-            0,
-            min(100, volume),
-        )   
-
-        self.audio_service.set_volume(
-        volume
-        )
 
     # =================================================
     # Run

@@ -4,16 +4,12 @@ Playback controls for the music player.
 
 import tkinter as tk
 from tkinter import ttk
-from turtle import position
-
-
 
 from src.ui.theme import (
     CONTROLS_BG,
     ACCENT_COLOR,
     TEXT_PRIMARY,
     TEXT_SECONDARY,
-    BODY_FONT,
     SMALL_FONT,
 )
 
@@ -21,12 +17,21 @@ from src.ui.theme import (
 class PlayerControls(tk.Frame):
     """Bottom playback control panel."""
 
-    def __init__(self, parent, on_play_pause=None, on_volume_change=None,on_seek=None,on_previous=None,on_next=None,):
+    def __init__(
+        self,
+        parent,
+        on_play_pause=None,
+        on_volume_change=None,
+        on_seek=None,
+        on_previous=None,
+        on_next=None,
+    ):
         super().__init__(
             parent,
             bg=CONTROLS_BG,
             height=140,
         )
+
         self.on_play_pause = on_play_pause
         self.on_volume_change = on_volume_change
         self.on_seek = on_seek
@@ -34,10 +39,22 @@ class PlayerControls(tk.Frame):
         self.on_next = on_next
 
         self.is_seeking = False
+
+        # Prevent the volume callback from firing
+        # while the controls are being initialized.
+        self.loading_volume = True
+
         self.pack_propagate(False)
 
         self.configure_styles()
         self.create_widgets()
+
+        # Initialization is complete.
+        self.loading_volume = False
+
+    # =================================================
+    # Styles
+    # =================================================
 
     def configure_styles(self):
         """Configure custom styles for playback sliders."""
@@ -49,6 +66,10 @@ class PlayerControls(tk.Frame):
             background=CONTROLS_BG,
             troughcolor="#2A2A2A",
         )
+
+    # =================================================
+    # Widgets
+    # =================================================
 
     def create_widgets(self):
         """Create playback controls."""
@@ -76,7 +97,9 @@ class PlayerControls(tk.Frame):
             fg=TEXT_SECONDARY,
         )
 
-        self.current_time_label.pack(side="left")
+        self.current_time_label.pack(
+            side="left"
+        )
 
         self.progress_bar = ttk.Scale(
             progress_frame,
@@ -85,21 +108,23 @@ class PlayerControls(tk.Frame):
             orient="horizontal",
             style="Player.Horizontal.TScale",
         )
+
         self.progress_bar.pack(
             side="left",
             fill="x",
             expand=True,
             padx=15,
         )
+
         self.progress_bar.bind(
             "<ButtonPress-1>",
             self.start_seek,
-            )
+        )
 
         self.progress_bar.bind(
             "<ButtonRelease-1>",
             self.finish_seek,
-            )
+        )
 
         self.duration_label = tk.Label(
             progress_frame,
@@ -109,8 +134,12 @@ class PlayerControls(tk.Frame):
             fg=TEXT_SECONDARY,
         )
 
-        self.duration_label.pack(side="right")
+        self.duration_label.pack(
+            side="right"
+        )
+
         self.progress_bar.set(0)
+
         # ==========================================
         # Control buttons
         # ==========================================
@@ -125,17 +154,26 @@ class PlayerControls(tk.Frame):
             padx=80,
         )
 
-        # Left spacer keeps controls centered.
+        # ==========================================
+        # Left spacer
+        # ==========================================
+
         left_section = tk.Frame(
             controls_row,
             bg=CONTROLS_BG,
             width=200,
         )
 
-        left_section.pack(side="left")
+        left_section.pack(
+            side="left"
+        )
+
         left_section.pack_propagate(False)
 
-        # Center playback buttons.
+        # ==========================================
+        # Center playback buttons
+        # ==========================================
+
         button_frame = tk.Frame(
             controls_row,
             bg=CONTROLS_BG,
@@ -192,7 +230,7 @@ class PlayerControls(tk.Frame):
         )
 
         volume_frame.pack(
-            side="right",
+            side="right"
         )
 
         volume_label = tk.Label(
@@ -217,6 +255,10 @@ class PlayerControls(tk.Frame):
             command=self.handle_volume_change,
         )
 
+        # Default visual value.
+        #
+        # loading_volume=True here, so this cannot
+        # overwrite the saved database value.
         self.volume_slider.set(70)
 
         self.volume_slider.pack(
@@ -225,44 +267,109 @@ class PlayerControls(tk.Frame):
             expand=True,
         )
 
+    # =================================================
+    # Button Creation
+    # =================================================
+
     def create_button(
-    self,
-    parent,
-    text,
-    accent=False,
-    command=None,
-):
-     """Create a playback button."""
-
-     button = tk.Button(
+        self,
         parent,
-        text=text,
-        font=(
-            "Segoe UI Symbol",
-            17 if accent else 14,
-        ),
-        bg=ACCENT_COLOR if accent else CONTROLS_BG,
-        fg=TEXT_PRIMARY,
-        activebackground=ACCENT_COLOR,
-        activeforeground=TEXT_PRIMARY,
-        relief="flat",
-        bd=0,
-        cursor="hand2",
-        width=3,
-    )
+        text,
+        accent=False,
+        command=None,
+    ):
+        """Create a playback button."""
 
-     if command is not None:
-        button.config(command=command)
+        button = tk.Button(
+            parent,
+            text=text,
+            font=(
+                "Segoe UI Symbol",
+                17 if accent else 14,
+            ),
+            bg=(
+                ACCENT_COLOR
+                if accent
+                else CONTROLS_BG
+            ),
+            fg=TEXT_PRIMARY,
+            activebackground=ACCENT_COLOR,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            bd=0,
+            cursor="hand2",
+            width=3,
+        )
 
-     return button
+        if command is not None:
+            button.config(
+                command=command
+            )
+
+        return button
+
+    # =================================================
+    # Playback State
+    # =================================================
 
     def set_playing(self, playing):
         """Update the Play/Pause button icon."""
 
         if playing:
-            self.play_button.config(text="⏸")
+            self.play_button.config(
+                text="⏸"
+            )
         else:
-            self.play_button.config(text="▶")
+            self.play_button.config(
+                text="▶"
+            )
+
+    # =================================================
+    # Volume
+    # =================================================
+
+    def set_volume(self, value):
+        """Update the volume slider visually."""
+
+        try:
+            value = float(value)
+
+        except (TypeError, ValueError):
+            value = 70
+
+        value = max(
+            0,
+            min(100, value),
+        )
+
+        # Prevent set() from being treated as a
+        # user volume change.
+        previous_state = self.loading_volume
+
+        self.loading_volume = True
+
+        self.volume_slider.set(
+            value
+        )
+
+        self.loading_volume = previous_state
+
+    def handle_volume_change(self, value):
+        """Notify MainWindow when volume changes."""
+
+        # Ignore callbacks generated while the
+        # slider is being initialized or synchronized.
+        if self.loading_volume:
+            return
+
+        if self.on_volume_change:
+            self.on_volume_change(
+                value
+            )
+
+    # =================================================
+    # Play / Pause
+    # =================================================
 
     def handle_play_pause(self):
         """Notify MainWindow that Play/Pause was pressed."""
@@ -270,31 +377,40 @@ class PlayerControls(tk.Frame):
         if self.on_play_pause:
             self.on_play_pause()
 
-    def handle_volume_change(self, value):
-        """Notify MainWindow when volume changes."""
-
-        if self.on_volume_change:
-            self.on_volume_change(value)
+    # =================================================
+    # Progress
+    # =================================================
 
     def format_time(self, seconds):
         """Convert seconds into M:SS format."""
 
-        seconds = max(0, int(seconds))
+        seconds = max(
+            0,
+            int(seconds),
+        )
 
         minutes = seconds // 60
         remaining_seconds = seconds % 60
 
-        return f"{minutes}:{remaining_seconds:02d}"
+        return (
+            f"{minutes}:"
+            f"{remaining_seconds:02d}"
+        )
 
     def set_duration(self, duration):
-        """Set the total duration displayed by the controls."""
+        """Set the total duration displayed."""
 
         self.progress_bar.config(
-            to=max(duration, 1)
+            to=max(
+                duration,
+                1,
+            )
         )
 
         self.duration_label.config(
-            text=self.format_time(duration)
+            text=self.format_time(
+                duration
+            )
         )
 
     def update_progress(self, position):
@@ -303,11 +419,19 @@ class PlayerControls(tk.Frame):
         if self.is_seeking:
             return
 
-        self.progress_bar.set(position)
+        self.progress_bar.set(
+            position
+        )
 
         self.current_time_label.config(
-            text=self.format_time(position)
+            text=self.format_time(
+                position
+            )
         )
+
+    # =================================================
+    # Seeking
+    # =================================================
 
     def start_seek(self, event):
         """Pause automatic progress updates while dragging."""
@@ -315,25 +439,32 @@ class PlayerControls(tk.Frame):
         self.is_seeking = True
 
     def finish_seek(self, event):
-        """Seek playback when the progress slider is released."""
+        """Seek playback when the slider is released."""
 
         position = self.progress_bar.get()
 
         self.is_seeking = False
 
         self.current_time_label.config(
-        text=self.format_time(position)
+            text=self.format_time(
+                position
+            )
         )
 
         if self.on_seek:
-            self.on_seek(position)
+            self.on_seek(
+                position
+            )
+
+    # =================================================
+    # Previous / Next
+    # =================================================
 
     def handle_previous(self):
         """Notify MainWindow that Previous was pressed."""
 
         if self.on_previous:
             self.on_previous()
-
 
     def handle_next(self):
         """Notify MainWindow that Next was pressed."""

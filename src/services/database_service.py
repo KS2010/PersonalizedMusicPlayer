@@ -12,8 +12,31 @@ class DatabaseService:
     """Handles persistent storage for the music library."""
 
     def __init__(self):
-        self.database_path = Path(
-            "data/music_player.db"
+        """Initialize the database service."""
+
+        # Find the project root based on this file's location.
+        #
+        # Project structure:
+        #
+        # Personalized-Music-Player/
+        # ├── data/
+        # │   └── music_player.db
+        # └── src/
+        #     └── services/
+        #         └── database_service.py
+        #
+        # parents[0] -> services
+        # parents[1] -> src
+        # parents[2] -> project root
+
+        project_root = Path(
+            __file__
+        ).resolve().parents[2]
+
+        self.database_path = (
+            project_root
+            / "data"
+            / "music_player.db"
         )
 
         self.database_path.parent.mkdir(
@@ -486,9 +509,7 @@ class DatabaseService:
             connection.commit()
 
     def clear_library(self):
-        """
-        Delete all songs and their playback history.
-        """
+        """Delete all songs and their playback history."""
 
         with self.connect() as connection:
 
