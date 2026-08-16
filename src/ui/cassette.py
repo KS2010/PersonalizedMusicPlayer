@@ -498,104 +498,84 @@ class CassettePanel(tk.Frame):
     def create_song_information(self):
         """Create the Now Playing metadata."""
 
-        # -----------------------------------------------------
-        # Title container
-        #
-        # Fixed horizontal boundaries prevent a long title
-        # from changing the window geometry.
-        # -----------------------------------------------------
-
-        title_container = tk.Frame(
-            self,
-            bg=CASSETTE_BG,
-            width=self.TEXT_MAX_WIDTH,
-        )
-
-        title_container.pack(
-            fill="x",
-            padx=50,
-        )
-
-        title_container.pack_propagate(False)
-
-        # -----------------------------------------------------
-        # Song title
-        # -----------------------------------------------------
+    # -----------------------------------------------------
+    # Song title
+    # -----------------------------------------------------
 
         self.song_title = tk.Label(
-            title_container,
-            text="No Song Playing",
-            font=TITLE_FONT,
-            bg=CASSETTE_BG,
-            fg=TEXT_PRIMARY,
-            anchor="center",
-            justify="center",
-            wraplength=self.TEXT_MAX_WIDTH,
-        )
+        self,
+        text="No Song Playing",
+        font=TITLE_FONT,
+        bg=CASSETTE_BG,
+        fg=TEXT_PRIMARY,
+        anchor="center",
+        justify="center",
+        wraplength=self.TEXT_MAX_WIDTH,
+    )
 
         self.song_title.pack(
-            fill="x",
-            pady=(0, 12),
-        )
+        fill="x",
+        padx=50,
+        pady=(0, 12),
+    )
 
-        # -----------------------------------------------------
-        # Artist
-        # -----------------------------------------------------
+    # -----------------------------------------------------
+    # Artist
+    # -----------------------------------------------------
 
         self.artist_label = tk.Label(
-            self,
-            text="Unknown Artist",
-            font=BODY_FONT,
-            bg=CASSETTE_BG,
-            fg=TEXT_SECONDARY,
-            anchor="center",
-            justify="center",
-            wraplength=600,
-        )
+        self,
+        text="Unknown Artist",
+        font=BODY_FONT,
+        bg=CASSETTE_BG,
+        fg=TEXT_SECONDARY,
+        anchor="center",
+        justify="center",
+        wraplength=600,
+    )
 
         self.artist_label.pack(
-            fill="x",
-            padx=50,
-            pady=(0, 8),
-        )
+        fill="x",
+        padx=50,
+        pady=(0, 8),
+    )
 
-        # -----------------------------------------------------
-        # Album
-        # -----------------------------------------------------
+    # -----------------------------------------------------
+    # Album
+    # -----------------------------------------------------
 
         self.album_label = tk.Label(
-            self,
-            text="Album : --",
-            font=BODY_FONT,
-            bg=CASSETTE_BG,
-            fg=TEXT_SECONDARY,
-            anchor="center",
-            justify="center",
-            wraplength=600,
-        )
+        self,
+        text="Album : --",
+        font=BODY_FONT,
+        bg=CASSETTE_BG,
+        fg=TEXT_SECONDARY,
+        anchor="center",
+        justify="center",
+        wraplength=600,
+    )
 
         self.album_label.pack(
-            fill="x",
-            padx=50,
-            pady=(0, 8),
-        )
+        fill="x",
+        padx=50,
+        pady=(0, 8),
+    )
 
-        # -----------------------------------------------------
-        # Duration
-        # -----------------------------------------------------
+    # -----------------------------------------------------
+    # Duration
+    # -----------------------------------------------------
 
         self.duration_label = tk.Label(
-            self,
-            text="Duration : --:--",
-            font=BODY_FONT,
-            bg=CASSETTE_BG,
-            fg=TEXT_SECONDARY,
-        )
+        self,
+        text="Duration : --:--",
+        font=BODY_FONT,
+        bg=CASSETTE_BG,
+        fg=TEXT_SECONDARY,
+    )
 
         self.duration_label.pack(
-            pady=(5, 40),
-        )
-
+        pady=(5, 40),
+    )
     # =========================================================
     # Text Helpers
     # =========================================================

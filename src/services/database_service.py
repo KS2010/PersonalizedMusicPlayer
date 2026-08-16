@@ -463,21 +463,6 @@ class DatabaseService:
 
         return row[0]
 
-    def delete_setting(self, key):
-        """Delete a saved setting."""
-
-        with self.connect() as connection:
-
-            connection.execute(
-                """
-                DELETE FROM settings
-                WHERE key = ?
-                """,
-                (key,),
-            )
-
-            connection.commit()
-
     def clear_settings(self):
         """Delete all saved application settings."""
 

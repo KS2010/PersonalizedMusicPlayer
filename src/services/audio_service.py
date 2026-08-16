@@ -5,7 +5,6 @@ Handles loading, playing, pausing, resuming,
 stopping, and volume control for audio files.
 """
 
-from turtle import position
 
 import pygame
 
