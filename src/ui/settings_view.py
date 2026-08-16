@@ -10,6 +10,7 @@ from src.ui.theme import (
     ACCENT_COLOR,
     TEXT_PRIMARY,
     TEXT_SECONDARY,
+    TEXT_MUTED,
     BORDER_COLOR,
 )
 
@@ -35,8 +36,7 @@ class SettingsView(tk.Frame):
         self.on_settings_reset = on_settings_reset
         self.on_volume_change = on_volume_change
 
-        # Prevent the volume callback from saving
-        # values while settings are being initialized.
+        # Prevent callbacks while loading settings.
         self.loading_settings = True
 
         self.create_widgets()
@@ -70,7 +70,11 @@ class SettingsView(tk.Frame):
         title_label = tk.Label(
             self.content_frame,
             text="SETTINGS",
-            font=("Segoe UI", 22, "bold"),
+            font=(
+                "Segoe UI",
+                22,
+                "bold",
+            ),
             bg=BACKGROUND_COLOR,
             fg=TEXT_PRIMARY,
         )
@@ -82,7 +86,10 @@ class SettingsView(tk.Frame):
         subtitle_label = tk.Label(
             self.content_frame,
             text="Customize your music player",
-            font=("Segoe UI", 10),
+            font=(
+                "Segoe UI",
+                10,
+            ),
             bg=BACKGROUND_COLOR,
             fg=TEXT_SECONDARY,
         )
@@ -93,7 +100,7 @@ class SettingsView(tk.Frame):
         )
 
         # ==========================================
-        # Playback section
+        # Playback
         # ==========================================
 
         self.create_section_title(
@@ -102,31 +109,10 @@ class SettingsView(tk.Frame):
 
         playback_frame = self.create_section()
 
-        volume_label = tk.Label(
+        self.create_setting_label(
             playback_frame,
-            text="Default Volume",
-            font=("Segoe UI", 10, "bold"),
-            bg="#1B1B1B",
-            fg=TEXT_PRIMARY,
-        )
-
-        volume_label.pack(
-            anchor="w",
-            padx=20,
-            pady=(18, 3),
-        )
-
-        volume_description = tk.Label(
-            playback_frame,
-            text="Volume used when the application starts.",
-            font=("Segoe UI", 9),
-            bg="#1B1B1B",
-            fg=TEXT_SECONDARY,
-        )
-
-        volume_description.pack(
-            anchor="w",
-            padx=20,
+            "Default Volume",
+            "Volume used when the application starts.",
         )
 
         volume_control_frame = tk.Frame(
@@ -137,21 +123,34 @@ class SettingsView(tk.Frame):
         volume_control_frame.pack(
             fill="x",
             padx=20,
-            pady=(12, 20),
+            pady=(14, 20),
         )
 
-        self.volume_value_label = tk.Label(
+        # ==========================================
+        # Volume icon
+        # ==========================================
+
+        volume_icon = tk.Canvas(
             volume_control_frame,
-            text="70%",
-            font=("Segoe UI", 9, "bold"),
+            width=30,
+            height=30,
             bg="#1B1B1B",
-            fg=ACCENT_COLOR,
-            width=5,
+            highlightthickness=0,
+            bd=0,
         )
 
-        self.volume_value_label.pack(
-            side="right",
+        volume_icon.pack(
+            side="left",
+            padx=(0, 10),
         )
+
+        self.draw_volume_icon(
+            volume_icon
+        )
+
+        # ==========================================
+        # Slider
+        # ==========================================
 
         self.volume_slider = tk.Scale(
             volume_control_frame,
@@ -169,11 +168,6 @@ class SettingsView(tk.Frame):
             command=self.handle_volume_change,
         )
 
-        # Initial visual value only.
-        # load_settings() will replace this with
-        # the value stored in SQLite.
-        self.volume_slider.set(70)
-
         self.volume_slider.pack(
             side="left",
             fill="x",
@@ -182,7 +176,29 @@ class SettingsView(tk.Frame):
         )
 
         # ==========================================
-        # History section
+        # Percentage
+        # ==========================================
+
+        self.volume_value_label = tk.Label(
+            volume_control_frame,
+            text="70%",
+            font=(
+                "Segoe UI",
+                10,
+                "bold",
+            ),
+            bg="#1B1B1B",
+            fg=ACCENT_COLOR,
+            width=5,
+            anchor="e",
+        )
+
+        self.volume_value_label.pack(
+            side="right",
+        )
+
+        # ==========================================
+        # History
         # ==========================================
 
         self.create_section_title(
@@ -191,45 +207,16 @@ class SettingsView(tk.Frame):
 
         history_frame = self.create_section()
 
-        history_label = tk.Label(
+        self.create_setting_label(
             history_frame,
-            text="Recently Played",
-            font=("Segoe UI", 10, "bold"),
-            bg="#1B1B1B",
-            fg=TEXT_PRIMARY,
+            "Recently Played",
+            "Remove all recorded playback history.",
         )
 
-        history_label.pack(
-            anchor="w",
-            padx=20,
-            pady=(18, 3),
-        )
-
-        history_description = tk.Label(
+        clear_history_button = self.create_action_button(
             history_frame,
-            text="Remove all recorded playback history.",
-            font=("Segoe UI", 9),
-            bg="#1B1B1B",
-            fg=TEXT_SECONDARY,
-        )
-
-        history_description.pack(
-            anchor="w",
-            padx=20,
-        )
-
-        clear_history_button = tk.Button(
-            history_frame,
-            text="CLEAR HISTORY",
-            font=("Segoe UI", 9, "bold"),
-            bg="#242424",
-            fg=TEXT_PRIMARY,
-            activebackground=ACCENT_COLOR,
-            activeforeground=TEXT_PRIMARY,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            command=self.clear_history,
+            "CLEAR HISTORY",
+            self.clear_history,
         )
 
         clear_history_button.pack(
@@ -241,7 +228,7 @@ class SettingsView(tk.Frame):
         )
 
         # ==========================================
-        # Library section
+        # Library
         # ==========================================
 
         self.create_section_title(
@@ -250,45 +237,16 @@ class SettingsView(tk.Frame):
 
         library_frame = self.create_section()
 
-        library_label = tk.Label(
+        self.create_setting_label(
             library_frame,
-            text="Music Library",
-            font=("Segoe UI", 10, "bold"),
-            bg="#1B1B1B",
-            fg=TEXT_PRIMARY,
+            "Music Library",
+            "Remove all songs from the local library.",
         )
 
-        library_label.pack(
-            anchor="w",
-            padx=20,
-            pady=(18, 3),
-        )
-
-        library_description = tk.Label(
+        clear_library_button = self.create_action_button(
             library_frame,
-            text="Remove all songs from the local library.",
-            font=("Segoe UI", 9),
-            bg="#1B1B1B",
-            fg=TEXT_SECONDARY,
-        )
-
-        library_description.pack(
-            anchor="w",
-            padx=20,
-        )
-
-        clear_library_button = tk.Button(
-            library_frame,
-            text="CLEAR LIBRARY",
-            font=("Segoe UI", 9, "bold"),
-            bg="#242424",
-            fg=TEXT_PRIMARY,
-            activebackground=ACCENT_COLOR,
-            activeforeground=TEXT_PRIMARY,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            command=self.clear_library,
+            "CLEAR LIBRARY",
+            self.clear_library,
         )
 
         clear_library_button.pack(
@@ -300,7 +258,7 @@ class SettingsView(tk.Frame):
         )
 
         # ==========================================
-        # Application section
+        # Application
         # ==========================================
 
         self.create_section_title(
@@ -309,18 +267,10 @@ class SettingsView(tk.Frame):
 
         application_frame = self.create_section()
 
-        reset_button = tk.Button(
+        reset_button = self.create_action_button(
             application_frame,
-            text="RESET SETTINGS",
-            font=("Segoe UI", 9, "bold"),
-            bg="#242424",
-            fg=TEXT_PRIMARY,
-            activebackground=ACCENT_COLOR,
-            activeforeground=TEXT_PRIMARY,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            command=self.reset_settings,
+            "RESET SETTINGS",
+            self.reset_settings,
         )
 
         reset_button.pack(
@@ -332,16 +282,159 @@ class SettingsView(tk.Frame):
         )
 
     # =================================================
-    # Section Helpers
+    # Volume Icon
     # =================================================
 
-    def create_section_title(self, text):
+    def draw_volume_icon(
+        self,
+        canvas,
+    ):
+        """Draw a simple speaker icon."""
+
+        canvas.delete(
+            "all"
+        )
+
+        icon_color = TEXT_SECONDARY
+
+        canvas.create_rectangle(
+            3,
+            11,
+            9,
+            20,
+            fill=icon_color,
+            outline="",
+        )
+
+        canvas.create_polygon(
+            9,
+            11,
+            18,
+            6,
+            18,
+            25,
+            9,
+            20,
+            fill=icon_color,
+            outline="",
+        )
+
+        canvas.create_arc(
+            13,
+            5,
+            29,
+            27,
+            start=-55,
+            extent=110,
+            style="arc",
+            outline=icon_color,
+            width=2,
+        )
+
+    # =================================================
+    # Setting Helpers
+    # =================================================
+
+    def create_setting_label(
+        self,
+        parent,
+        title,
+        description,
+    ):
+        """Create a setting title and description."""
+
+        title_label = tk.Label(
+            parent,
+            text=title,
+            font=(
+                "Segoe UI",
+                10,
+                "bold",
+            ),
+            bg="#1B1B1B",
+            fg=TEXT_PRIMARY,
+        )
+
+        title_label.pack(
+            anchor="w",
+            padx=20,
+            pady=(18, 3),
+        )
+
+        description_label = tk.Label(
+            parent,
+            text=description,
+            font=(
+                "Segoe UI",
+                9,
+            ),
+            bg="#1B1B1B",
+            fg=TEXT_SECONDARY,
+        )
+
+        description_label.pack(
+            anchor="w",
+            padx=20,
+        )
+
+    def create_action_button(
+        self,
+        parent,
+        text,
+        command,
+    ):
+        """Create a consistent settings action button."""
+
+        button = tk.Button(
+            parent,
+            text=text,
+            font=(
+                "Segoe UI",
+                9,
+                "bold",
+            ),
+            bg="#242424",
+            fg=TEXT_PRIMARY,
+            activebackground=ACCENT_COLOR,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            bd=0,
+            cursor="hand2",
+            command=command,
+        )
+
+        button.bind(
+            "<Enter>",
+            lambda event:
+            button.config(
+                bg="#302B42"
+            ),
+        )
+
+        button.bind(
+            "<Leave>",
+            lambda event:
+            button.config(
+                bg="#242424"
+            ),
+        )
+
+        return button
+
+    def create_section_title(
+        self,
+        text,
+    ):
         """Create a section heading."""
 
         label = tk.Label(
             self.content_frame,
             text=text,
-            font=("Segoe UI", 9, "bold"),
+            font=(
+                "Segoe UI",
+                9,
+                "bold",
+            ),
             bg=BACKGROUND_COLOR,
             fg=TEXT_SECONDARY,
         )
@@ -368,7 +461,7 @@ class SettingsView(tk.Frame):
         return frame
 
     # =================================================
-    # Settings
+    # Settings Loading
     # =================================================
 
     def load_settings(self):
@@ -385,11 +478,16 @@ class SettingsView(tk.Frame):
         )
 
         try:
+
             volume = float(
                 saved_volume or 70
             )
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
+
             volume = 70
 
         volume = max(
@@ -397,38 +495,36 @@ class SettingsView(tk.Frame):
             min(100, volume),
         )
 
-        # Prevent the slider update from being
-        # interpreted as a user change.
-        self.loading_settings = True
-
-        # Update Settings slider.
         self.volume_slider.set(
             volume
         )
 
-        # Update Settings percentage.
         self.volume_value_label.config(
             text=f"{int(volume)}%"
         )
-
-        self.loading_settings = False
 
     # =================================================
     # Volume
     # =================================================
 
-    def handle_volume_change(self, value):
+    def handle_volume_change(
+        self,
+        value,
+    ):
         """Save and apply the default volume."""
 
-        # Ignore callbacks generated while loading
-        # the saved value from the database.
         if self.loading_settings:
             return
 
         try:
+
             volume = float(value)
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
+
             return
 
         volume = max(
@@ -436,16 +532,12 @@ class SettingsView(tk.Frame):
             min(100, volume),
         )
 
-        # ==========================================
-        # Update Settings percentage
-        # ==========================================
-
         self.volume_value_label.config(
             text=f"{int(volume)}%"
         )
 
         # ==========================================
-        # Save to database
+        # Save
         # ==========================================
 
         if self.database_service is not None:
@@ -466,7 +558,7 @@ class SettingsView(tk.Frame):
             )
 
         # ==========================================
-        # Synchronize Library slider
+        # Synchronize player
         # ==========================================
 
         if self.on_volume_change:
@@ -487,7 +579,10 @@ class SettingsView(tk.Frame):
 
         confirm = messagebox.askyesno(
             "Clear History",
-            "Are you sure you want to clear your recently played history?",
+            (
+                "Are you sure you want to clear "
+                "your recently played history?"
+            ),
         )
 
         if not confirm:
@@ -497,7 +592,10 @@ class SettingsView(tk.Frame):
 
         messagebox.showinfo(
             "History Cleared",
-            "Recently played history has been cleared.",
+            (
+                "Recently played history "
+                "has been cleared."
+            ),
         )
 
     # =================================================
@@ -512,7 +610,10 @@ class SettingsView(tk.Frame):
 
         confirm = messagebox.askyesno(
             "Clear Library",
-            "This will remove all songs from your library. Continue?",
+            (
+                "This will remove all songs "
+                "from your library. Continue?"
+            ),
         )
 
         if not confirm:
@@ -543,14 +644,17 @@ class SettingsView(tk.Frame):
         if not confirm:
             return
 
-        # Remove saved settings.
         self.database_service.clear_settings()
 
-        # Set the internal loading flag so that
-        # updating the slider does not save again.
+        # ==========================================
+        # Reset UI
+        # ==========================================
+
         self.loading_settings = True
 
-        self.volume_slider.set(70)
+        self.volume_slider.set(
+            70
+        )
 
         self.volume_value_label.config(
             text="70%"
@@ -558,14 +662,20 @@ class SettingsView(tk.Frame):
 
         self.loading_settings = False
 
-        # Reset actual audio volume.
+        # ==========================================
+        # Reset audio
+        # ==========================================
+
         if self.audio_service is not None:
 
             self.audio_service.set_volume(
                 70
             )
 
-        # Synchronize Library player.
+        # ==========================================
+        # Synchronize player
+        # ==========================================
+
         if self.on_volume_change:
 
             self.on_volume_change(

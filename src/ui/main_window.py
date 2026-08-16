@@ -12,6 +12,7 @@ from src.ui.player_controls import PlayerControls
 from src.ui.statistics_view import StatisticsView
 from src.ui.home_view import HomeView
 from src.ui.settings_view import SettingsView
+
 from src.services.audio_service import AudioService
 from src.services.database_service import DatabaseService
 
@@ -28,6 +29,7 @@ class MainWindow:
         self.root = tk.Tk()
 
         self.database_service = DatabaseService()
+
         self.audio_service = AudioService()
 
         self.current_song_index = None
@@ -171,6 +173,11 @@ class MainWindow:
         self.playlist_frame.pack(
             side="right",
             fill="y",
+            padx=(0, 0),
+        )
+
+        self.playlist_frame.configure(
+        width=320,
         )
 
         # ==========================================
@@ -229,7 +236,9 @@ class MainWindow:
         """Show the player and playlist area."""
 
         self.home_frame.pack_forget()
+
         self.statistics_frame.pack_forget()
+
         self.settings_frame.pack_forget()
 
         self.cassette_frame.pack(
@@ -247,8 +256,11 @@ class MainWindow:
         """Show the Home dashboard."""
 
         self.cassette_frame.pack_forget()
+
         self.playlist_frame.pack_forget()
+
         self.statistics_frame.pack_forget()
+
         self.settings_frame.pack_forget()
 
         self.home_frame.pack(
@@ -262,8 +274,11 @@ class MainWindow:
         """Show the Statistics dashboard."""
 
         self.cassette_frame.pack_forget()
+
         self.playlist_frame.pack_forget()
+
         self.home_frame.pack_forget()
+
         self.settings_frame.pack_forget()
 
         self.statistics_frame.pack(
@@ -277,8 +292,11 @@ class MainWindow:
         """Show the Settings dashboard."""
 
         self.cassette_frame.pack_forget()
+
         self.playlist_frame.pack_forget()
+
         self.home_frame.pack_forget()
+
         self.statistics_frame.pack_forget()
 
         self.settings_frame.pack(
@@ -292,31 +310,53 @@ class MainWindow:
     # Song Selection
     # =================================================
 
-    def handle_song_selection(self, song):
+    def handle_song_selection(
+        self,
+        song,
+    ):
         """Load and play the selected song."""
 
         try:
+
             self.current_song_index = (
-                self.playlist_frame.songs.index(song)
+                self.playlist_frame
+                .songs
+                .index(song)
             )
 
         except ValueError:
+
             self.current_song_index = None
 
+        # Update cassette display.
         self.cassette_frame.update_song(
             song
         )
 
+        # Load selected song.
         self.audio_service.load_song(
             song
         )
 
+        # Start playback.
         self.audio_service.play()
 
-        # Record playback.
+        # ==========================================
+        # Update playlist active-song state
+        # ==========================================
+
+
+        # ==========================================
+        # Record playback
+        # ==========================================
+
         self.database_service.record_play(
             song.filepath
         )
+
+        # ==========================================
+        # Update player controls
+        # ==========================================
 
         self.controls_frame.set_duration(
             song.duration
@@ -340,9 +380,9 @@ class MainWindow:
         if self.audio_service.current_song is None:
             return
 
-        # ------------------------------------------
+        # ==========================================
         # Resume
-        # ------------------------------------------
+        # ==========================================
 
         if self.audio_service.is_paused:
 
@@ -352,9 +392,9 @@ class MainWindow:
                 True
             )
 
-        # ------------------------------------------
+        # ==========================================
         # Pause
-        # ------------------------------------------
+        # ==========================================
 
         elif self.audio_service.is_playing:
 
@@ -364,9 +404,9 @@ class MainWindow:
                 False
             )
 
-        # ------------------------------------------
+        # ==========================================
         # Start loaded song
-        # ------------------------------------------
+        # ==========================================
 
         else:
 
@@ -384,13 +424,21 @@ class MainWindow:
     # Volume
     # =================================================
 
-    def handle_volume_change(self, value):
-        """Change playback volume from the player controls."""
+    def handle_volume_change(
+        self,
+        value,
+    ):
+        """Change playback volume."""
 
         try:
+
             volume = float(value)
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
+
             return
 
         volume = max(
@@ -409,13 +457,21 @@ class MainWindow:
             int(volume),
         )
 
-    def handle_settings_volume_change(self, value):
+    def handle_settings_volume_change(
+        self,
+        value,
+    ):
         """Synchronize Settings volume with player controls."""
 
         try:
+
             volume = float(value)
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
+
             return
 
         volume = max(
@@ -428,7 +484,7 @@ class MainWindow:
             volume
         )
 
-        # Update the Library player's slider.
+        # Update player slider.
         self.controls_frame.set_volume(
             volume
         )
@@ -440,17 +496,24 @@ class MainWindow:
     def load_saved_settings(self):
         """Load saved application settings."""
 
-        saved_volume = self.database_service.get_setting(
-            "default_volume",
-            "70",
+        saved_volume = (
+            self.database_service.get_setting(
+                "default_volume",
+                "70",
+            )
         )
 
         try:
+
             volume = float(
                 saved_volume or 70
             )
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
+
             volume = 70
 
         volume = max(
@@ -458,12 +521,12 @@ class MainWindow:
             min(100, volume),
         )
 
-        # Apply saved volume to audio engine.
+        # Apply saved volume.
         self.audio_service.set_volume(
             volume
         )
 
-        # Synchronize Library player slider.
+        # Synchronize player slider.
         self.controls_frame.set_volume(
             volume
         )
@@ -493,11 +556,14 @@ class MainWindow:
             else:
 
                 position = (
-                    self.audio_service.get_position()
+                    self.audio_service
+                    .get_position()
                 )
 
                 duration = (
-                    self.audio_service.current_song.duration
+                    self.audio_service
+                    .current_song
+                    .duration
                 )
 
                 position = min(
@@ -521,7 +587,10 @@ class MainWindow:
     def handle_song_finished(self):
         """Automatically play the next song."""
 
-        songs = self.playlist_frame.songs
+        songs = (
+            self.playlist_frame
+            .songs
+        )
 
         if not songs:
             return
@@ -544,7 +613,10 @@ class MainWindow:
     # Seeking
     # =================================================
 
-    def handle_seek(self, position):
+    def handle_seek(
+        self,
+        position,
+    ):
         """Seek the current song."""
 
         if self.audio_service.current_song is None:
@@ -562,10 +634,16 @@ class MainWindow:
     # Play Song By Index
     # =================================================
 
-    def play_song_at_index(self, index):
-        """Load and play a song from the playlist by index."""
+    def play_song_at_index(
+        self,
+        index,
+    ):
+        """Load and play a song from the playlist."""
 
-        songs = self.playlist_frame.songs
+        songs = (
+            self.playlist_frame
+            .songs
+        )
 
         if not songs:
             return
@@ -576,20 +654,43 @@ class MainWindow:
 
         song = songs[index]
 
+        # ==========================================
+        # Update cassette
+        # ==========================================
+
         self.cassette_frame.update_song(
             song
         )
+
+        # ==========================================
+        # Load song
+        # ==========================================
 
         self.audio_service.load_song(
             song
         )
 
+        # ==========================================
+        # Play song
+        # ==========================================
+
         self.audio_service.play()
 
-        # Record playback.
+        # ==========================================
+        # Update active playlist row
+        # ==========================================
+
+        # ==========================================
+        # Record playback
+        # ==========================================
+
         self.database_service.record_play(
             song.filepath
         )
+
+        # ==========================================
+        # Update controls
+        # ==========================================
 
         self.controls_frame.set_duration(
             song.duration
@@ -610,7 +711,10 @@ class MainWindow:
     def handle_next(self):
         """Play the next song."""
 
-        songs = self.playlist_frame.songs
+        songs = (
+            self.playlist_frame
+            .songs
+        )
 
         if not songs:
             return
@@ -636,14 +740,19 @@ class MainWindow:
     def handle_previous(self):
         """Play the previous song."""
 
-        songs = self.playlist_frame.songs
+        songs = (
+            self.playlist_frame
+            .songs
+        )
 
         if not songs:
             return
 
         if self.current_song_index is None:
 
-            previous_index = len(songs) - 1
+            previous_index = (
+                len(songs) - 1
+            )
 
         else:
 
@@ -659,7 +768,10 @@ class MainWindow:
     # Navigation
     # =================================================
 
-    def handle_navigation(self, page):
+    def handle_navigation(
+        self,
+        page,
+    ):
         """Handle sidebar navigation."""
 
         # ==========================================

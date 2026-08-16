@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 from src.services.metadata_service import load_song_metadata
+
 from src.ui.theme import (
     ACCENT_COLOR,
     BORDER_COLOR,
@@ -18,6 +19,8 @@ from src.ui.theme import (
 class PlaylistView(tk.Frame):
     """Displays and manages the current playlist."""
 
+    PLAYLIST_WIDTH = 320
+
     def __init__(
         self,
         parent,
@@ -27,37 +30,27 @@ class PlaylistView(tk.Frame):
         super().__init__(
             parent,
             bg=PLAYLIST_BG,
-            width=300,
+            width=self.PLAYLIST_WIDTH,
         )
-
-        # ==========================================
-        # Services / callbacks
-        # ==========================================
 
         self.on_song_selected = on_song_selected
         self.database_service = database_service
 
+        # IMPORTANT:
+        # Prevent child widgets from changing the
+        # playlist panel width.
         self.pack_propagate(False)
+        self.grid_propagate(False)
 
-        # ==========================================
-        # Playlist data
-        # ==========================================
-
-        # Master library.
+        # Stores Song objects.
         self.songs = []
 
-        # Current navigation view.
         self.current_view = "library"
 
-        # Load songs from database if available.
-        if self.database_service is not None:
+        if self.database_service:
             self.songs = (
                 self.database_service.get_all_songs()
             )
-
-        # ==========================================
-        # Create UI
-        # ==========================================
 
         self.create_widgets()
 
@@ -89,10 +82,11 @@ class PlaylistView(tk.Frame):
             font=("Segoe UI", 14, "bold"),
             bg=PLAYLIST_BG,
             fg=TEXT_PRIMARY,
+            anchor="w",
         )
 
         self.title_label.pack(
-            anchor="w"
+            fill="x",
         )
 
         self.song_count_label = tk.Label(
@@ -101,6 +95,7 @@ class PlaylistView(tk.Frame):
             font=("Segoe UI", 9),
             bg=PLAYLIST_BG,
             fg=TEXT_SECONDARY,
+            anchor="w",
         )
 
         self.song_count_label.pack(
@@ -205,7 +200,10 @@ class PlaylistView(tk.Frame):
             pady=15,
         )
 
-        # Initial render.
+        # Make sure the list itself never requests
+        # a larger width because of its children.
+        self.song_list_frame.pack_propagate(False)
+
         self.refresh_playlist()
 
     # =================================================
@@ -232,7 +230,6 @@ class PlaylistView(tk.Frame):
 
         for filepath in filepaths:
 
-            # Avoid duplicate songs.
             if self.song_exists(filepath):
                 continue
 
@@ -240,25 +237,20 @@ class PlaylistView(tk.Frame):
 
             self.songs.append(song)
 
-            # Persist song in database.
-            if self.database_service is not None:
-                self.database_service.add_song(song)
+            if self.database_service:
 
-        # Return to library after importing.
-        self.current_view = "library"
-
-        self.title_label.config(
-            text="YOUR PLAYLIST"
-        )
+                self.database_service.add_song(
+                    song
+                )
 
         self.refresh_playlist()
 
     # =================================================
-    # Song existence
+    # Song Exists
     # =================================================
 
     def song_exists(self, filepath):
-        """Check whether a song already exists."""
+        """Check whether a song is already in playlist."""
 
         return any(
             song.filepath == filepath
@@ -272,10 +264,6 @@ class PlaylistView(tk.Frame):
     def refresh_playlist(self):
         """Redraw the current playlist view."""
 
-        # ==========================================
-        # Determine which songs to display
-        # ==========================================
-
         if self.current_view == "favorites":
 
             songs_to_display = [
@@ -286,37 +274,39 @@ class PlaylistView(tk.Frame):
 
         elif self.current_view == "recent":
 
-            if self.database_service is None:
-                songs_to_display = []
+            if self.database_service:
+
+                songs_to_display = (
+                    self.database_service
+                    .get_recent_songs()
+                )
 
             else:
-                songs_to_display = (
-                    self.database_service.get_recent_songs()
-                )
+
+                songs_to_display = []
 
         else:
 
-            # Library.
             songs_to_display = self.songs
-
-        # ==========================================
-        # Render
-        # ==========================================
 
         self.render_songs(
             songs_to_display
         )
 
+    # =================================================
+    # Render Songs
+    # =================================================
+
     def render_songs(self, songs):
         """Render the provided songs."""
 
-        # Remove existing rows.
-        for widget in self.song_list_frame.winfo_children():
+        for widget in (
+            self.song_list_frame.winfo_children()
+        ):
             widget.destroy()
 
         song_count = len(songs)
 
-        # Update count.
         self.song_count_label.config(
             text=(
                 f"{song_count} "
@@ -324,12 +314,12 @@ class PlaylistView(tk.Frame):
             )
         )
 
-        # Empty state.
         if not songs:
+
             self.show_empty_state()
+
             return
 
-        # Create rows.
         for index, song in enumerate(songs):
 
             self.create_song_row(
@@ -341,18 +331,112 @@ class PlaylistView(tk.Frame):
     # Song Row
     # =================================================
 
-    def create_song_row(self, song, index):
-        """Create one song entry."""
+    def create_song_row(
+        self,
+        song,
+        index,
+    ):
+        """Create a fixed-width song entry."""
+
+        # ==========================================
+        # Row
+        # ==========================================
 
         song_frame = tk.Frame(
             self.song_list_frame,
             bg=PLAYLIST_BG,
             cursor="hand2",
+            height=62,
         )
 
         song_frame.pack(
             fill="x",
             pady=4,
+        )
+
+        # IMPORTANT:
+        # The row itself cannot resize according
+        # to the song title.
+        song_frame.pack_propagate(False)
+
+        # ==========================================
+        # RIGHT-SIDE CONTROLS
+        #
+        # These are created FIRST so they reserve
+        # their space before the title area.
+        # ==========================================
+
+        controls_frame = tk.Frame(
+            song_frame,
+            bg=PLAYLIST_BG,
+            width=92,
+        )
+
+        controls_frame.pack(
+            side="right",
+            fill="y",
+            padx=(4, 5),
+        )
+
+        controls_frame.pack_propagate(False)
+
+        # ==========================================
+        # Favorite
+        # ==========================================
+
+        favorite_button = tk.Button(
+            controls_frame,
+            text=(
+                "♥"
+                if song.is_favorite
+                else "♡"
+            ),
+            font=(
+                "Segoe UI Symbol",
+                11,
+            ),
+            bg=PLAYLIST_BG,
+            fg=(
+                ACCENT_COLOR
+                if song.is_favorite
+                else TEXT_SECONDARY
+            ),
+            activebackground=PLAYLIST_BG,
+            activeforeground=ACCENT_COLOR,
+            relief="flat",
+            bd=0,
+            cursor="hand2",
+            width=2,
+            command=lambda selected_song=song:
+                self.toggle_favorite(
+                    selected_song
+                ),
+        )
+
+        favorite_button.pack(
+            side="right",
+            padx=(2, 0),
+            pady=15,
+        )
+
+        # ==========================================
+        # Duration
+        # ==========================================
+
+        duration_label = tk.Label(
+            controls_frame,
+            text=song.formatted_duration,
+            font=("Segoe UI", 9),
+            bg=PLAYLIST_BG,
+            fg=TEXT_SECONDARY,
+            width=5,
+            anchor="e",
+        )
+
+        duration_label.pack(
+            side="right",
+            padx=(0, 4),
+            pady=21,
         )
 
         # ==========================================
@@ -366,28 +450,50 @@ class PlaylistView(tk.Frame):
 
         info_frame.pack(
             side="left",
-            fill="x",
+            fill="both",
             expand=True,
+            padx=(10, 2),
+            pady=8,
         )
+
+        # ==========================================
+        # Title
+        # ==========================================
 
         title_label = tk.Label(
             info_frame,
-            text=song.title,
-            font=("Segoe UI", 10, "bold"),
+            text=self.truncate_text(
+                song.title,
+                24,
+            ),
+            font=(
+                "Segoe UI",
+                10,
+                "bold",
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_PRIMARY,
             anchor="w",
-            width=24,
         )
 
         title_label.pack(
             fill="x",
         )
 
+        # ==========================================
+        # Artist
+        # ==========================================
+
         artist_label = tk.Label(
             info_frame,
-            text=song.artist,
-            font=("Segoe UI", 9),
+            text=self.truncate_text(
+                song.artist,
+                22,
+            ),
+            font=(
+                "Segoe UI",
+                9,
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_SECONDARY,
             anchor="w",
@@ -399,59 +505,7 @@ class PlaylistView(tk.Frame):
         )
 
         # ==========================================
-        # Favorite button
-        # ==========================================
-
-        favorite_button = tk.Button(
-            song_frame,
-            text=(
-                "♥"
-                if song.is_favorite
-                else "♡"
-            ),
-            font=("Segoe UI Symbol", 11),
-            bg=PLAYLIST_BG,
-            fg=(
-                ACCENT_COLOR
-                if song.is_favorite
-                else TEXT_SECONDARY
-            ),
-            activebackground=PLAYLIST_BG,
-            activeforeground=ACCENT_COLOR,
-            relief="flat",
-            bd=0,
-            cursor="hand2",
-            command=lambda selected_song=song:
-                self.toggle_favorite(
-                    selected_song
-                ),
-        )
-
-        favorite_button.pack(
-            side="right",
-            padx=(6, 0),
-        )
-
-        # ==========================================
-        # Duration
-        # ==========================================
-
-        duration_label = tk.Label(
-            song_frame,
-            text=song.formatted_duration,
-            font=("Segoe UI", 9),
-            bg=PLAYLIST_BG,
-            fg=TEXT_SECONDARY,
-            width=5,
-        )
-
-        duration_label.pack(
-            side="right",
-            padx=(5, 0),
-        )
-
-        # ==========================================
-        # Clickable widgets
+        # Click handling
         # ==========================================
 
         clickable_widgets = [
@@ -468,10 +522,113 @@ class PlaylistView(tk.Frame):
                 "<Button-1>",
                 lambda event,
                 selected_song=song:
-                    self.select_song(
-                        selected_song
-                    ),
+                self.select_song(
+                    selected_song
+                ),
             )
+
+        # ==========================================
+        # Hover
+        # ==========================================
+
+        hover_widgets = [
+            song_frame,
+            info_frame,
+            title_label,
+            artist_label,
+            duration_label,
+            controls_frame,
+        ]
+
+        for widget in hover_widgets:
+
+            widget.bind(
+                "<Enter>",
+                lambda event,
+                widgets=hover_widgets,
+                fav=favorite_button:
+                self.set_row_hover(
+                    widgets,
+                    fav,
+                    True,
+                ),
+            )
+
+            widget.bind(
+                "<Leave>",
+                lambda event,
+                widgets=hover_widgets,
+                fav=favorite_button:
+                self.set_row_hover(
+                    widgets,
+                    fav,
+                    False,
+                ),
+            )
+
+    # =================================================
+    # Text Truncation
+    # =================================================
+
+    def truncate_text(
+        self,
+        text,
+        max_length,
+    ):
+        """Prevent long metadata from affecting layout."""
+
+        if text is None:
+            return ""
+
+        text = str(text)
+
+        if len(text) <= max_length:
+            return text
+
+        return (
+            text[:max_length - 3]
+            + "..."
+        )
+
+    # =================================================
+    # Row Hover
+    # =================================================
+
+    def set_row_hover(
+        self,
+        widgets,
+        favorite_button,
+        hovering,
+    ):
+        """Apply row hover styling."""
+
+        background = (
+            "#24242A"
+            if hovering
+            else PLAYLIST_BG
+        )
+
+        for widget in widgets:
+
+            try:
+
+                widget.configure(
+                    bg=background
+                )
+
+            except tk.TclError:
+
+                pass
+
+        try:
+
+            favorite_button.configure(
+                bg=background
+            )
+
+        except tk.TclError:
+
+            pass
 
     # =================================================
     # Song Selection
@@ -481,7 +638,10 @@ class PlaylistView(tk.Frame):
         """Handle song selection."""
 
         if self.on_song_selected:
-            self.on_song_selected(song)
+
+            self.on_song_selected(
+                song
+            )
 
     # =================================================
     # Empty State
@@ -499,32 +659,14 @@ class PlaylistView(tk.Frame):
             expand=True,
         )
 
-        if self.current_view == "favorites":
-
-            title = "No favorite songs"
-
-            subtitle = (
-                "Add songs to your favorites"
-            )
-
-        elif self.current_view == "recent":
-
-            title = "No recent songs"
-
-            subtitle = (
-                "Play some music to see it here"
-            )
-
-        else:
-
-            title = "No songs yet"
-
-            subtitle = "Add music to your library"
-
         empty_title = tk.Label(
             empty_container,
-            text=title,
-            font=("Segoe UI", 10, "bold"),
+            text="No songs yet",
+            font=(
+                "Segoe UI",
+                10,
+                "bold",
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_PRIMARY,
         )
@@ -533,8 +675,11 @@ class PlaylistView(tk.Frame):
 
         empty_subtitle = tk.Label(
             empty_container,
-            text=subtitle,
-            font=("Segoe UI", 9),
+            text="Add music to your library",
+            font=(
+                "Segoe UI",
+                9,
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_SECONDARY,
         )
@@ -547,18 +692,27 @@ class PlaylistView(tk.Frame):
     # Search
     # =================================================
 
-    def clear_search_placeholder(self, event):
-        """Remove the search placeholder."""
+    def clear_search_placeholder(
+        self,
+        event,
+    ):
+        """Remove search placeholder."""
 
-        if self.search_entry.get() == "Search songs...":
+        if (
+            self.search_entry.get()
+            == "Search songs..."
+        ):
 
             self.search_entry.delete(
                 0,
                 tk.END,
             )
 
-    def restore_search_placeholder(self, event):
-        """Restore the search placeholder."""
+    def restore_search_placeholder(
+        self,
+        event,
+    ):
+        """Restore search placeholder."""
 
         if not self.search_entry.get().strip():
 
@@ -567,8 +721,11 @@ class PlaylistView(tk.Frame):
                 "Search songs...",
             )
 
-    def filter_playlist(self, event=None):
-        """Filter songs according to the current view."""
+    def filter_playlist(
+        self,
+        event=None,
+    ):
+        """Filter songs."""
 
         query = (
             self.search_entry
@@ -577,55 +734,18 @@ class PlaylistView(tk.Frame):
             .lower()
         )
 
-        # Treat placeholder as empty search.
         if query == "search songs...":
             query = ""
 
-        # ==========================================
-        # Get songs for current view
-        # ==========================================
-
-        if self.current_view == "favorites":
-
-            songs_to_filter = [
-                song
-                for song in self.songs
-                if song.is_favorite
-            ]
-
-        elif self.current_view == "recent":
-
-            if self.database_service is None:
-                songs_to_filter = []
-
-            else:
-                songs_to_filter = (
-                    self.database_service.get_recent_songs()
-                )
-
-        else:
-
-            songs_to_filter = self.songs
-
-        # ==========================================
-        # Empty search
-        # ==========================================
-
         if not query:
 
-            self.render_songs(
-                songs_to_filter
-            )
+            self.refresh_playlist()
 
             return
 
-        # ==========================================
-        # Search
-        # ==========================================
-
         filtered_songs = [
             song
-            for song in songs_to_filter
+            for song in self.songs
             if (
                 query in song.title.lower()
                 or query in song.artist.lower()
@@ -633,14 +753,11 @@ class PlaylistView(tk.Frame):
             )
         ]
 
-        # ==========================================
-        # No results
-        # ==========================================
-
         if not filtered_songs:
 
             for widget in (
-                self.song_list_frame.winfo_children()
+                self.song_list_frame
+                .winfo_children()
             ):
                 widget.destroy()
 
@@ -652,16 +769,16 @@ class PlaylistView(tk.Frame):
 
             return
 
-        # ==========================================
-        # Display results
-        # ==========================================
-
         self.render_songs(
             filtered_songs
         )
 
+    # =================================================
+    # No Search Results
+    # =================================================
+
     def show_no_results(self):
-        """Display a no-results message."""
+        """Display no search results."""
 
         empty_container = tk.Frame(
             self.song_list_frame,
@@ -675,7 +792,11 @@ class PlaylistView(tk.Frame):
         empty_title = tk.Label(
             empty_container,
             text="No matching songs",
-            font=("Segoe UI", 10, "bold"),
+            font=(
+                "Segoe UI",
+                10,
+                "bold",
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_PRIMARY,
         )
@@ -685,9 +806,13 @@ class PlaylistView(tk.Frame):
         empty_subtitle = tk.Label(
             empty_container,
             text=(
-                "Try another title, artist, or album"
+                "Try another title, artist, "
+                "or album"
             ),
-            font=("Segoe UI", 9),
+            font=(
+                "Segoe UI",
+                9,
+            ),
             bg=PLAYLIST_BG,
             fg=TEXT_SECONDARY,
         )
@@ -701,23 +826,23 @@ class PlaylistView(tk.Frame):
     # =================================================
 
     def toggle_favorite(self, song):
-        """Toggle a song's favorite status."""
+        """Toggle favorite status."""
 
-        song.is_favorite = not song.is_favorite
+        song.is_favorite = (
+            not song.is_favorite
+        )
 
-        # Save to database.
-        if self.database_service is not None:
+        if self.database_service:
 
             self.database_service.set_favorite(
                 song.filepath,
                 song.is_favorite,
             )
 
-        # Refresh current view.
         self.refresh_playlist()
 
     # =================================================
-    # Navigation: Library
+    # Library
     # =================================================
 
     def show_library(self):
@@ -729,24 +854,16 @@ class PlaylistView(tk.Frame):
             text="YOUR PLAYLIST"
         )
 
-        self.search_entry.delete(
-            0,
-            tk.END,
-        )
-
-        self.search_entry.insert(
-            0,
-            "Search songs...",
-        )
+        self.reset_search()
 
         self.refresh_playlist()
 
     # =================================================
-    # Navigation: Favorites
+    # Favorites View
     # =================================================
 
     def show_favorites(self):
-        """Display favorite songs only."""
+        """Display favorite songs."""
 
         self.current_view = "favorites"
 
@@ -754,20 +871,12 @@ class PlaylistView(tk.Frame):
             text="FAVORITES"
         )
 
-        self.search_entry.delete(
-            0,
-            tk.END,
-        )
-
-        self.search_entry.insert(
-            0,
-            "Search songs...",
-        )
+        self.reset_search()
 
         self.refresh_playlist()
 
     # =================================================
-    # Navigation: Recent
+    # Recent View
     # =================================================
 
     def show_recent(self):
@@ -779,6 +888,30 @@ class PlaylistView(tk.Frame):
             text="RECENTLY PLAYED"
         )
 
+        self.reset_search()
+
+        if self.database_service:
+
+            recent_songs = (
+                self.database_service
+                .get_recent_songs()
+            )
+
+            self.render_songs(
+                recent_songs
+            )
+
+        else:
+
+            self.render_songs([])
+
+    # =================================================
+    # Reset Search
+    # =================================================
+
+    def reset_search(self):
+        """Reset the playlist search field."""
+
         self.search_entry.delete(
             0,
             tk.END,
@@ -788,5 +921,3 @@ class PlaylistView(tk.Frame):
             0,
             "Search songs...",
         )
-
-        self.refresh_playlist()

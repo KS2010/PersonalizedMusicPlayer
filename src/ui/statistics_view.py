@@ -6,17 +6,37 @@ import tkinter as tk
 
 from src.ui.theme import (
     BACKGROUND_COLOR,
+    CARD_BG,
+    CARD_BG_HOVER,
+    SURFACE_BG,
+    BORDER_COLOR,
     ACCENT_COLOR,
+    ACCENT_MUTED,
     TEXT_PRIMARY,
     TEXT_SECONDARY,
-    BORDER_COLOR,
+    TEXT_MUTED,
+    PAGE_TITLE_FONT,
+    SECTION_TITLE_FONT,
+    BODY_FONT,
+    BODY_BOLD_FONT,
+    SMALL_FONT,
+    SMALL_BOLD_FONT,
+    STAT_VALUE_FONT,
+    STAT_LABEL_FONT,
+    CARD_GAP,
+    DASHBOARD_PADDING_X,
+    DASHBOARD_PADDING_Y,
 )
 
 
 class StatisticsView(tk.Frame):
     """Displays listening statistics and music analytics."""
 
-    def __init__(self, parent, database_service):
+    def __init__(
+        self,
+        parent,
+        database_service,
+    ):
         super().__init__(
             parent,
             bg=BACKGROUND_COLOR,
@@ -46,75 +66,133 @@ class StatisticsView(tk.Frame):
         self.content_frame.pack(
             fill="both",
             expand=True,
-            padx=50,
-            pady=35,
+            padx=DASHBOARD_PADDING_X,
+            pady=DASHBOARD_PADDING_Y,
         )
 
         # ==========================================
         # Header
         # ==========================================
 
-        header_label = tk.Label(
+        self.create_header()
+
+        # ==========================================
+        # KPI cards
+        # ==========================================
+
+        self.create_kpi_section()
+
+        # ==========================================
+        # Most played section
+        # ==========================================
+
+        self.create_most_played_section()
+
+    # =================================================
+    # Header
+    # =================================================
+
+    def create_header(self):
+        """Create the Statistics page header."""
+
+        self.header_frame = tk.Frame(
             self.content_frame,
+            bg=BACKGROUND_COLOR,
+        )
+
+        self.header_frame.pack(
+            fill="x",
+            pady=(0, 22),
+        )
+
+        # Small page indicator
+
+        page_indicator = tk.Label(
+            self.header_frame,
+            text="INSIGHTS",
+            font=SMALL_BOLD_FONT,
+            bg=BACKGROUND_COLOR,
+            fg=ACCENT_COLOR,
+        )
+
+        page_indicator.pack(
+            anchor="w",
+            pady=(0, 5),
+        )
+
+        # Main title
+
+        title_label = tk.Label(
+            self.header_frame,
             text="STATISTICS",
-            font=("Segoe UI", 22, "bold"),
+            font=PAGE_TITLE_FONT,
             bg=BACKGROUND_COLOR,
             fg=TEXT_PRIMARY,
         )
 
-        header_label.pack(
+        title_label.pack(
             anchor="w",
         )
 
+        # Subtitle
+
         subtitle_label = tk.Label(
-            self.content_frame,
+            self.header_frame,
             text="Your listening activity at a glance",
-            font=("Segoe UI", 10),
+            font=BODY_FONT,
             bg=BACKGROUND_COLOR,
             fg=TEXT_SECONDARY,
         )
 
         subtitle_label.pack(
             anchor="w",
-            pady=(5, 25),
+            pady=(6, 0),
         )
 
-        # ==========================================
-        # Statistics cards container
-        # ==========================================
+    # =================================================
+    # KPI Section
+    # =================================================
 
-        cards_frame = tk.Frame(
+    def create_kpi_section(self):
+        """Create the four statistics KPI cards."""
+
+        self.kpi_frame = tk.Frame(
             self.content_frame,
             bg=BACKGROUND_COLOR,
         )
 
-        cards_frame.pack(
+        self.kpi_frame.pack(
             fill="x",
+            pady=(0, 26),
         )
 
+        # Four equal columns.
+
         for column in range(4):
-            cards_frame.grid_columnconfigure(
+
+            self.kpi_frame.grid_columnconfigure(
                 column,
                 weight=1,
+                uniform="statistics_kpi",
             )
 
         # ==========================================
-        # Total Songs
+        # Total songs
         # ==========================================
 
         self.total_songs_value = self.create_stat_card(
-            cards_frame,
+            self.kpi_frame,
             column=0,
             icon="♫",
             title="TOTAL SONGS",
         )
 
         # ==========================================
-        # Total Plays
+        # Total plays
         # ==========================================
 
         self.total_plays_value = self.create_stat_card(
-            cards_frame,
+            self.kpi_frame,
             column=1,
             icon="▶",
             title="TOTAL PLAYS",
@@ -125,92 +203,21 @@ class StatisticsView(tk.Frame):
         # ==========================================
 
         self.favorite_count_value = self.create_stat_card(
-            cards_frame,
+            self.kpi_frame,
             column=2,
             icon="♥",
             title="FAVORITES",
         )
 
         # ==========================================
-        # Listening Time
+        # Listening time
         # ==========================================
 
         self.listening_time_value = self.create_stat_card(
-            cards_frame,
+            self.kpi_frame,
             column=3,
             icon="◷",
             title="LISTENING TIME",
-        )
-
-        # ==========================================
-        # Most Played Section
-        # ==========================================
-
-        most_played_container = tk.Frame(
-            self.content_frame,
-            bg="#1B1B1B",
-            highlightbackground=BORDER_COLOR,
-            highlightthickness=1,
-        )
-
-        most_played_container.pack(
-            fill="both",
-            expand=True,
-            pady=(30, 0),
-        )
-
-        most_played_header = tk.Frame(
-            most_played_container,
-            bg="#1B1B1B",
-        )
-
-        most_played_header.pack(
-            fill="x",
-            padx=25,
-            pady=(20, 15),
-        )
-
-        most_played_title = tk.Label(
-            most_played_header,
-            text="MOST PLAYED SONGS",
-            font=("Segoe UI", 13, "bold"),
-            bg="#1B1B1B",
-            fg=TEXT_PRIMARY,
-        )
-
-        most_played_title.pack(
-            side="left",
-        )
-
-        # ==========================================
-        # Separator
-        # ==========================================
-
-        separator = tk.Frame(
-            most_played_container,
-            bg=BORDER_COLOR,
-            height=1,
-        )
-
-        separator.pack(
-            fill="x",
-            padx=25,
-        )
-
-        # ==========================================
-        # Most played song list
-        # ==========================================
-
-        self.most_played_frame = tk.Frame(
-            most_played_container,
-            bg="#1B1B1B",
-        )
-
-        self.most_played_frame.pack(
-            fill="both",
-            expand=True,
-            padx=25,
-            pady=20,
         )
 
     # =================================================
@@ -224,11 +231,12 @@ class StatisticsView(tk.Frame):
         icon,
         title,
     ):
-        """Create one statistics card."""
+        """Create one polished statistics KPI card."""
 
         card = tk.Frame(
             parent,
-            bg="#1B1B1B",
+            bg=CARD_BG,
+            height=112,
             highlightbackground=BORDER_COLOR,
             highlightthickness=1,
         )
@@ -237,25 +245,77 @@ class StatisticsView(tk.Frame):
             row=0,
             column=column,
             sticky="nsew",
-            padx=8,
+            padx=(
+                0 if column == 0 else CARD_GAP // 2,
+                0 if column == 3 else CARD_GAP // 2,
+            ),
+        )
+
+        card.grid_propagate(False)
+
+        # ==========================================
+        # Main content
+        # ==========================================
+
+        content = tk.Frame(
+            card,
+            bg=CARD_BG,
+        )
+
+        content.pack(
+            fill="both",
+            expand=True,
+            padx=16,
+            pady=13,
         )
 
         # ==========================================
         # Icon
         # ==========================================
 
+        icon_frame = tk.Frame(
+            content,
+            bg=ACCENT_MUTED,
+            width=42,
+            height=42,
+        )
+
+        icon_frame.pack(
+            side="left",
+            padx=(0, 13),
+            anchor="center",
+        )
+
+        icon_frame.pack_propagate(False)
+
         icon_label = tk.Label(
-            card,
+            icon_frame,
             text=icon,
-            font=("Segoe UI Symbol", 18),
-            bg="#1B1B1B",
+            font=(
+                "Segoe UI Symbol",
+                18,
+            ),
+            bg=ACCENT_MUTED,
             fg=ACCENT_COLOR,
         )
 
         icon_label.pack(
-            anchor="w",
-            padx=18,
-            pady=(15, 5),
+            expand=True,
+        )
+
+        # ==========================================
+        # Text area
+        # ==========================================
+
+        text_frame = tk.Frame(
+            content,
+            bg=CARD_BG,
+        )
+
+        text_frame.pack(
+            side="left",
+            fill="both",
+            expand=True,
         )
 
         # ==========================================
@@ -263,16 +323,17 @@ class StatisticsView(tk.Frame):
         # ==========================================
 
         value_label = tk.Label(
-            card,
+            text_frame,
             text="0",
-            font=("Segoe UI", 22, "bold"),
-            bg="#1B1B1B",
+            font=STAT_VALUE_FONT,
+            bg=CARD_BG,
             fg=TEXT_PRIMARY,
+            anchor="w",
         )
 
         value_label.pack(
             anchor="w",
-            padx=18,
+            pady=(0, 1),
         )
 
         # ==========================================
@@ -280,20 +341,310 @@ class StatisticsView(tk.Frame):
         # ==========================================
 
         title_label = tk.Label(
-            card,
+            text_frame,
             text=title,
-            font=("Segoe UI", 8, "bold"),
-            bg="#1B1B1B",
-            fg=TEXT_SECONDARY,
+            font=STAT_LABEL_FONT,
+            bg=CARD_BG,
+            fg=TEXT_MUTED,
+            anchor="w",
         )
 
         title_label.pack(
             anchor="w",
-            padx=18,
-            pady=(3, 15),
         )
 
+        # ==========================================
+        # Hover widgets
+        # ==========================================
+
+        hover_widgets = [
+            card,
+            content,
+            icon_frame,
+            icon_label,
+            text_frame,
+            value_label,
+            title_label,
+        ]
+
+        for widget in hover_widgets:
+
+            widget.bind(
+                "<Enter>",
+                lambda event,
+                widgets=hover_widgets,
+                icon_box=icon_frame,
+                icon_widget=icon_label,
+                value_widget=value_label,
+                title_widget=title_label:
+                self.set_card_hover(
+                    widgets,
+                    icon_box,
+                    icon_widget,
+                    value_widget,
+                    title_widget,
+                    True,
+                ),
+            )
+
+            widget.bind(
+                "<Leave>",
+                lambda event,
+                widgets=hover_widgets,
+                icon_box=icon_frame,
+                icon_widget=icon_label,
+                value_widget=value_label,
+                title_widget=title_label:
+                self.set_card_hover(
+                    widgets,
+                    icon_box,
+                    icon_widget,
+                    value_widget,
+                    title_widget,
+                    False,
+                ),
+            )
+
         return value_label
+
+    # =================================================
+    # KPI Hover
+    # =================================================
+
+    def set_card_hover(
+        self,
+        widgets,
+        icon_box,
+        icon_widget,
+        value_widget,
+        title_widget,
+        hovering,
+    ):
+        """Apply the KPI card hover state."""
+
+        if hovering:
+
+            background = CARD_BG_HOVER
+            title_color = TEXT_SECONDARY
+
+        else:
+
+            background = CARD_BG
+            title_color = TEXT_MUTED
+
+        for widget in widgets:
+
+            try:
+
+                widget.configure(
+                    bg=background,
+                )
+
+            except tk.TclError:
+
+                pass
+
+        try:
+
+            icon_box.configure(
+                bg=ACCENT_MUTED,
+            )
+
+            icon_widget.configure(
+                bg=ACCENT_MUTED,
+                fg=ACCENT_COLOR,
+            )
+
+            value_widget.configure(
+                bg=background,
+                fg=TEXT_PRIMARY,
+            )
+
+            title_widget.configure(
+                bg=background,
+                fg=title_color,
+            )
+
+        except tk.TclError:
+
+            pass
+
+    # =================================================
+    # Most Played Section
+    # =================================================
+
+    def create_most_played_section(self):
+        """Create the most played songs section."""
+
+        self.most_played_container = tk.Frame(
+            self.content_frame,
+            bg=SURFACE_BG,
+            highlightbackground=BORDER_COLOR,
+            highlightthickness=1,
+        )
+
+        self.most_played_container.pack(
+            fill="both",
+            expand=True,
+        )
+
+        # ==========================================
+        # Header
+        # ==========================================
+
+        header_frame = tk.Frame(
+            self.most_played_container,
+            bg=SURFACE_BG,
+        )
+
+        header_frame.pack(
+            fill="x",
+            padx=22,
+            pady=(18, 14),
+        )
+
+        # Header title
+
+        title_label = tk.Label(
+            header_frame,
+            text="LISTENING LEADERS",
+            font=SECTION_TITLE_FONT,
+            bg=SURFACE_BG,
+            fg=TEXT_PRIMARY,
+        )
+
+        title_label.pack(
+            side="left",
+        )
+
+        # Header subtitle
+
+        subtitle_label = tk.Label(
+            header_frame,
+            text="Your most played tracks",
+            font=SMALL_FONT,
+            bg=SURFACE_BG,
+            fg=TEXT_MUTED,
+        )
+
+        subtitle_label.pack(
+            side="left",
+            padx=10,
+        )
+
+        # ==========================================
+        # Header separator
+        # ==========================================
+
+        separator = tk.Frame(
+            self.most_played_container,
+            bg=BORDER_COLOR,
+            height=1,
+        )
+
+        separator.pack(
+            fill="x",
+            padx=22,
+        )
+
+        # ==========================================
+        # Column header
+        # ==========================================
+
+        self.create_table_header()
+
+        # ==========================================
+        # Song list
+        # ==========================================
+
+        self.most_played_frame = tk.Frame(
+            self.most_played_container,
+            bg=SURFACE_BG,
+        )
+
+        self.most_played_frame.pack(
+            fill="both",
+            expand=True,
+            padx=22,
+            pady=(0, 12),
+        )
+
+    # =================================================
+    # Table Header
+    # =================================================
+
+    def create_table_header(self):
+        """Create the most-played table header."""
+
+        header = tk.Frame(
+            self.most_played_container,
+            bg="#202126",
+            height=36,
+        )
+
+        header.pack(
+            fill="x",
+            padx=1,
+            pady=(10, 0),
+        )
+
+        header.pack_propagate(False)
+
+        # ==========================================
+        # Rank
+        # ==========================================
+
+        rank_label = tk.Label(
+            header,
+            text="#",
+            font=SMALL_BOLD_FONT,
+            bg="#202126",
+            fg=TEXT_MUTED,
+            width=5,
+            anchor="center",
+        )
+
+        rank_label.pack(
+            side="left",
+            padx=(14, 0),
+        )
+
+        # ==========================================
+        # Track
+        # ==========================================
+
+        track_label = tk.Label(
+            header,
+            text="TRACK",
+            font=SMALL_BOLD_FONT,
+            bg="#202126",
+            fg=TEXT_MUTED,
+            anchor="w",
+        )
+
+        track_label.pack(
+            side="left",
+            padx=(10, 0),
+        )
+
+        # ==========================================
+        # Plays
+        # ==========================================
+
+        plays_label = tk.Label(
+            header,
+            text="PLAYS",
+            font=SMALL_BOLD_FONT,
+            bg="#202126",
+            fg=TEXT_MUTED,
+            width=12,
+            anchor="e",
+        )
+
+        plays_label.pack(
+            side="right",
+            padx=(0, 18),
+        )
 
     # =================================================
     # Refresh Statistics
@@ -326,7 +677,7 @@ class StatisticsView(tk.Frame):
         )
 
         # ==========================================
-        # Update cards
+        # Update KPI cards
         # ==========================================
 
         self.total_songs_value.config(
@@ -348,7 +699,7 @@ class StatisticsView(tk.Frame):
         )
 
         # ==========================================
-        # Most played songs
+        # Refresh most played
         # ==========================================
 
         self.refresh_most_played()
@@ -360,8 +711,11 @@ class StatisticsView(tk.Frame):
     def refresh_most_played(self):
         """Display the most frequently played songs."""
 
-        # Remove previous rows.
-        for widget in self.most_played_frame.winfo_children():
+        # Remove existing rows.
+
+        for widget in (
+            self.most_played_frame.winfo_children()
+        ):
             widget.destroy()
 
         most_played = (
@@ -376,17 +730,7 @@ class StatisticsView(tk.Frame):
 
         if not most_played:
 
-            empty_label = tk.Label(
-                self.most_played_frame,
-                text="No listening data yet",
-                font=("Segoe UI", 10),
-                bg="#1B1B1B",
-                fg=TEXT_SECONDARY,
-            )
-
-            empty_label.pack(
-                pady=30,
-            )
+            self.create_empty_state()
 
             return
 
@@ -418,17 +762,20 @@ class StatisticsView(tk.Frame):
         song,
         play_count,
     ):
-        """Create one most-played song row."""
+        """Create one polished most-played song row."""
 
         row = tk.Frame(
             self.most_played_frame,
-            bg="#1B1B1B",
+            bg=SURFACE_BG,
+            height=64,
+            cursor="hand2",
         )
 
         row.pack(
             fill="x",
-            pady=7,
         )
+
+        row.pack_propagate(False)
 
         # ==========================================
         # Rank
@@ -436,15 +783,50 @@ class StatisticsView(tk.Frame):
 
         rank_label = tk.Label(
             row,
-            text=f"{rank:02}",
-            width=4,
-            font=("Segoe UI", 10, "bold"),
-            bg="#1B1B1B",
+            text=f"{rank:02d}",
+            font=SMALL_BOLD_FONT,
+            bg=SURFACE_BG,
             fg=ACCENT_COLOR,
+            width=5,
+            anchor="center",
         )
 
         rank_label.pack(
             side="left",
+            padx=(0, 8),
+        )
+
+        # ==========================================
+        # Music icon
+        # ==========================================
+
+        icon_frame = tk.Frame(
+            row,
+            bg=ACCENT_MUTED,
+            width=38,
+            height=38,
+        )
+
+        icon_frame.pack(
+            side="left",
+            padx=(2, 12),
+        )
+
+        icon_frame.pack_propagate(False)
+
+        icon_label = tk.Label(
+            icon_frame,
+            text="♫",
+            font=(
+                "Segoe UI Symbol",
+                15,
+            ),
+            bg=ACCENT_MUTED,
+            fg=ACCENT_COLOR,
+        )
+
+        icon_label.pack(
+            expand=True,
         )
 
         # ==========================================
@@ -453,21 +835,28 @@ class StatisticsView(tk.Frame):
 
         info_frame = tk.Frame(
             row,
-            bg="#1B1B1B",
+            bg=SURFACE_BG,
         )
 
         info_frame.pack(
             side="left",
-            fill="x",
+            fill="both",
             expand=True,
-            padx=(10, 10),
+            pady=8,
         )
+
+        # ==========================================
+        # Song title
+        # ==========================================
 
         title_label = tk.Label(
             info_frame,
-            text=song.title,
-            font=("Segoe UI", 10, "bold"),
-            bg="#1B1B1B",
+            text=self.truncate_text(
+                song.title,
+                60,
+            ),
+            font=BODY_BOLD_FONT,
+            bg=SURFACE_BG,
             fg=TEXT_PRIMARY,
             anchor="w",
         )
@@ -476,11 +865,18 @@ class StatisticsView(tk.Frame):
             fill="x",
         )
 
+        # ==========================================
+        # Artist
+        # ==========================================
+
         artist_label = tk.Label(
             info_frame,
-            text=song.artist,
-            font=("Segoe UI", 9),
-            bg="#1B1B1B",
+            text=self.truncate_text(
+                song.artist,
+                40,
+            ),
+            font=SMALL_FONT,
+            bg=SURFACE_BG,
             fg=TEXT_SECONDARY,
             anchor="w",
         )
@@ -503,24 +899,260 @@ class StatisticsView(tk.Frame):
         play_count_label = tk.Label(
             row,
             text=play_text,
-            font=("Segoe UI", 9, "bold"),
-            bg="#1B1B1B",
+            font=SMALL_BOLD_FONT,
+            bg=SURFACE_BG,
             fg=TEXT_SECONDARY,
+            width=12,
+            anchor="e",
         )
 
         play_count_label.pack(
             side="right",
-            padx=10,
+            padx=(10, 18),
+        )
+
+        # ==========================================
+        # Separator
+        # ==========================================
+
+        separator = tk.Frame(
+            self.most_played_frame,
+            bg=BORDER_COLOR,
+            height=1,
+        )
+
+        separator.pack(
+            fill="x",
+        )
+
+        # ==========================================
+        # Hover behavior
+        # ==========================================
+
+        widgets = [
+            row,
+            rank_label,
+            icon_frame,
+            icon_label,
+            info_frame,
+            title_label,
+            artist_label,
+            play_count_label,
+        ]
+
+        for widget in widgets:
+
+            widget.bind(
+                "<Enter>",
+                lambda event,
+                items=widgets,
+                icon=icon_frame,
+                plays=play_count_label:
+                self.set_song_row_hover(
+                    items,
+                    icon,
+                    plays,
+                    True,
+                ),
+            )
+
+            widget.bind(
+                "<Leave>",
+                lambda event,
+                items=widgets,
+                icon=icon_frame,
+                plays=play_count_label:
+                self.set_song_row_hover(
+                    items,
+                    icon,
+                    plays,
+                    False,
+                ),
+            )
+
+    # =================================================
+    # Song Row Hover
+    # =================================================
+
+    def set_song_row_hover(
+        self,
+        widgets,
+        icon_frame,
+        plays_label,
+        hovering,
+    ):
+        """Apply hover styling to a most-played row."""
+
+        background = (
+            CARD_BG_HOVER
+            if hovering
+            else SURFACE_BG
+        )
+
+        play_color = (
+            ACCENT_COLOR
+            if hovering
+            else TEXT_SECONDARY
+        )
+
+        for widget in widgets:
+
+            try:
+
+                widget.configure(
+                    bg=background,
+                )
+
+            except tk.TclError:
+
+                pass
+
+        try:
+
+            icon_frame.configure(
+                bg=ACCENT_MUTED,
+            )
+
+        except tk.TclError:
+
+            pass
+
+        try:
+
+            plays_label.configure(
+                bg=background,
+                fg=play_color,
+            )
+
+        except tk.TclError:
+
+            pass
+
+    # =================================================
+    # Empty State
+    # =================================================
+
+    def create_empty_state(self):
+        """Create a polished empty listening state."""
+
+        empty_frame = tk.Frame(
+            self.most_played_frame,
+            bg=SURFACE_BG,
+        )
+
+        empty_frame.pack(
+            fill="both",
+            expand=True,
+        )
+
+        # ==========================================
+        # Icon
+        # ==========================================
+
+        icon_frame = tk.Frame(
+            empty_frame,
+            bg=ACCENT_MUTED,
+            width=48,
+            height=48,
+        )
+
+        icon_frame.pack(
+            pady=(30, 8),
+        )
+
+        icon_frame.pack_propagate(False)
+
+        icon_label = tk.Label(
+            icon_frame,
+            text="♫",
+            font=(
+                "Segoe UI Symbol",
+                22,
+            ),
+            bg=ACCENT_MUTED,
+            fg=ACCENT_COLOR,
+        )
+
+        icon_label.pack(
+            expand=True,
+        )
+
+        # ==========================================
+        # Title
+        # ==========================================
+
+        title_label = tk.Label(
+            empty_frame,
+            text="No listening data yet",
+            font=BODY_BOLD_FONT,
+            bg=SURFACE_BG,
+            fg=TEXT_PRIMARY,
+        )
+
+        title_label.pack()
+
+        # ==========================================
+        # Subtitle
+        # ==========================================
+
+        subtitle_label = tk.Label(
+            empty_frame,
+            text=(
+                "Play some music to build your listening history."
+            ),
+            font=SMALL_FONT,
+            bg=SURFACE_BG,
+            fg=TEXT_MUTED,
+        )
+
+        subtitle_label.pack(
+            pady=(5, 0),
+        )
+
+    # =================================================
+    # Text Utilities
+    # =================================================
+
+    def truncate_text(
+        self,
+        text,
+        max_length,
+    ):
+        """Safely truncate long text."""
+
+        if text is None:
+            return ""
+
+        text = str(text)
+
+        if len(text) <= max_length:
+            return text
+
+        return (
+            text[: max_length - 3]
+            + "..."
         )
 
     # =================================================
     # Listening Time Formatting
     # =================================================
 
-    def format_listening_time(self, seconds):
+    def format_listening_time(
+        self,
+        seconds,
+    ):
         """Convert seconds into a readable duration."""
 
-        seconds = int(seconds)
+        try:
+
+            seconds = int(seconds)
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            return "0 min"
 
         hours = seconds // 3600
 
@@ -528,17 +1160,35 @@ class StatisticsView(tk.Frame):
             seconds % 3600
         ) // 60
 
-        # Less than one minute.
-        if hours == 0 and minutes == 0:
-            return "<1 min" if seconds > 0 else "0 min"
+        # ==========================================
+        # Less than one minute
+        # ==========================================
 
-        # Less than one hour.
+        if hours == 0 and minutes == 0:
+
+            if seconds > 0:
+                return "<1 min"
+
+            return "0 min"
+
+        # ==========================================
+        # Less than one hour
+        # ==========================================
+
         if hours == 0:
+
             return f"{minutes} min"
 
-        # Whole number of hours.
+        # ==========================================
+        # Whole hours
+        # ==========================================
+
         if minutes == 0:
+
             return f"{hours}h"
 
+        # ==========================================
+        # Hours + minutes
+        # ==========================================
+
         return f"{hours}h {minutes}m"
-    
